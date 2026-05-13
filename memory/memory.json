@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "updated_at_utc": "2026-05-13T17:19:40Z",
+  "updated_at_utc": "2026-05-13T17:21:00Z",
   "strategy_instance_id": "binance_mexc_leadlag_v1",
   "account_namespace": {
     "binance_uid": "unknown",
@@ -37,9 +37,9 @@
   "open_orders": [],
   "recent_errors": [],
   "codex_progress": {
-    "current_goal": "Publish the current workspace to GitHub and keep the repository clone-ready",
-    "last_completed_milestone": "Prepared repository publication setup with .gitmodules for reference gitlinks and full local validation",
-    "next_required_step": "Push master to https://github.com/kgorlov/AlphaFlip.git, then continue remaining backend tasks: z-score mean-reversion/adverse-move exits, MEXC spot protobuf parsing, or top-N live universe rotation",
+    "current_goal": "Continue remaining backend tasks while keeping GitHub publication current",
+    "last_completed_milestone": "Published master to https://github.com/kgorlov/AlphaFlip.git with .gitmodules and full local validation",
+    "next_required_step": "Continue remaining backend tasks: z-score mean-reversion/adverse-move exits, MEXC spot protobuf parsing, or top-N live universe rotation",
     "do_not_repeat": [
       "Do not store secrets in repo files",
       "Do not put LLMs in live signal or execution paths",

@@ -23,13 +23,14 @@ Publish the current workspace to `https://github.com/kgorlov/AlphaFlip.git` and 
 
 ## Status
 
-In progress on 2026-05-13.
+Completed on 2026-05-13.
 
 ## Validation
 
 - `git ls-files | Select-String -Pattern '(^|/)(\.env|.*\.env|.*\.pem|.*\.key|secrets/|local/)'`: no tracked secret files detected.
 - `.\.venv\Scripts\python.exe -m unittest discover -s tests`: passed, 163 tests.
 - `.\.venv\Scripts\python.exe -m compileall llbot apps tests`: passed.
+- `git push -u origin master`: passed; `master` now tracks `origin/master`.
 
 ## Non-Goals
 

@@ -14,6 +14,7 @@
 - Added `.gitmodules` for the existing reference gitlinks under `references/trading-bot-basis/`, matching their current remotes.
 - Decision: keep reference repositories as submodules/research material instead of vendoring their source into production code.
 - Validation before push: tracked secret-file scan found no `.env`, `*.pem`, `*.key`, `secrets/`, or `local/` paths; full unittest and compileall passed.
+- Pushed local `master` to `https://github.com/kgorlov/AlphaFlip.git` and set upstream tracking to `origin/master`.
 
 ## Deep Research Report Decisions
 
