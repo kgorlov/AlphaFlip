@@ -1,0 +1,19 @@
+[submodule "references/trading-bot-basis/blackbird"]
+	path = references/trading-bot-basis/blackbird
+	url = https://github.com/webpolis/blackbird.git
+
+[submodule "references/trading-bot-basis/hftbacktest"]
+	path = references/trading-bot-basis/hftbacktest
+	url = https://github.com/nkaz001/hftbacktest.git
+
+[submodule "references/trading-bot-basis/hummingbot"]
+	path = references/trading-bot-basis/hummingbot
+	url = https://github.com/hummingbot/hummingbot.git
+
+[submodule "references/trading-bot-basis/lead-lag"]
+	path = references/trading-bot-basis/lead-lag
+	url = https://github.com/philipperemy/lead-lag.git
+
+[submodule "references/trading-bot-basis/lead_lag_pilot"]
+	path = references/trading-bot-basis/lead_lag_pilot
+	url = https://github.com/ohenrik/lead_lag_pilot.git

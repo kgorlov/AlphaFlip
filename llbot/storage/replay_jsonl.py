@@ -9,6 +9,7 @@ from typing import Any
 
 from llbot.domain.enums import MarketType, Venue
 from llbot.domain.market_data import BookTicker, DepthLevel, OrderBookDepth
+from llbot.domain.models import Trade
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,6 +74,24 @@ def replay_event_from_depth(depth: OrderBookDepth) -> ReplayEvent:
     )
 
 
+def replay_event_from_trade(trade: Trade) -> ReplayEvent:
+    return ReplayEvent(
+        event_type="trade",
+        venue=trade.venue.value,
+        market=trade.market.value,
+        symbol=trade.symbol,
+        local_ts_ms=trade.local_ts_ms,
+        exchange_ts_ms=trade.exchange_ts_ms,
+        receive_monotonic_ns=None,
+        payload={
+            "price": str(trade.price),
+            "qty": str(trade.qty),
+            "side": trade.side.value if trade.side else None,
+            "trade_id": trade.trade_id,
+        },
+    )
+
+
 def read_replay_events(path: str | Path) -> list[ReplayEvent]:
     events: list[ReplayEvent] = []
     with Path(path).open("r", encoding="utf-8") as f:
@@ -118,6 +137,26 @@ def depth_from_replay_event(event: ReplayEvent) -> OrderBookDepth:
         receive_monotonic_ns=event.receive_monotonic_ns,
         version=payload.get("version"),
         raw=payload.get("raw") or {},
+    )
+
+
+def trade_from_replay_event(event: ReplayEvent) -> Trade:
+    if event.event_type != "trade":
+        raise ValueError(f"Expected trade event, got {event.event_type}")
+    from llbot.domain.enums import Side
+
+    payload = event.payload
+    side = payload.get("side")
+    return Trade(
+        venue=Venue(event.venue),
+        market=MarketType(event.market),
+        symbol=event.symbol,
+        price=Decimal(str(payload["price"])),
+        qty=Decimal(str(payload["qty"])),
+        side=Side(side) if side else None,
+        exchange_ts_ms=event.exchange_ts_ms,
+        local_ts_ms=event.local_ts_ms or event.exchange_ts_ms or 0,
+        trade_id=payload.get("trade_id"),
     )
 
 

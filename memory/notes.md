@@ -8,6 +8,13 @@
 - Never put an LLM in the live signal or execution path.
 - Validate Binance leadership dynamically per symbol/window instead of assuming it globally.
 
+## 2026-05-13 Repository Publication Setup
+
+- Configured the local repository for publication to `https://github.com/kgorlov/AlphaFlip.git`.
+- Added `.gitmodules` for the existing reference gitlinks under `references/trading-bot-basis/`, matching their current remotes.
+- Decision: keep reference repositories as submodules/research material instead of vendoring their source into production code.
+- Validation before push: tracked secret-file scan found no `.env`, `*.pem`, `*.key`, `secrets/`, or `local/` paths; full unittest and compileall passed.
+
 ## Deep Research Report Decisions
 
 - Add repo-state files: `.agent/PLANS.md`, `memory/memory.json`, `memory/notes.md`, and `reports/*`.
@@ -245,3 +252,74 @@
 - Smoke health report with MetaScalp discovery found `http://127.0.0.1:17845` and connected MEXC DemoMode connection `4`; data feeds, storage, and risk were also `ok`.
 - Decision: health checks are read-only and explicitly report `orders_submitted=false`, `orders_cancelled=false`, `secrets_read=false`, and `live_trading_enabled=false`.
 - Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 129 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-13 Read-Only Dashboard UI Milestone
+
+- Added an explicit `Operator UI` section to `TASKS.md`; UI was missing because the original plan was focused on trading runtime, replay, risk, storage, and MetaScalp integration.
+- Added `llbot.monitoring.dashboard` and `apps/build_dashboard.py` to generate `reports/dashboard.html` from health, runner, and memory JSON artifacts.
+- Dashboard shows system health, feed streams, MetaScalp demo status, paper summary, safety flags, and progress without a server.
+- Decision: v1 UI is static and read-only; it has no submit order, cancel order, secret input, or live trading controls.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 132 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-13 Dashboard Report Links Milestone
+
+- Extended the static dashboard with report links for replay research, demo fill comparison, MetaScalp private reconciliation, and private capture summary artifacts.
+- Added exists/missing status and file size metadata for each configured report link.
+- Added repeated `--report-link "Label=path"` support to `apps/build_dashboard.py` for extra local read-only reports.
+- Decision: report links remain local/static only and do not mutate reports, submit orders, cancel orders, read secrets, or enable live trading.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 133 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-13 Monitoring Alerts Milestone
+
+- Added deterministic alert evaluation for missing required feeds, stale required feeds, MetaScalp critical health, and active risk stops.
+- `alerts_to_risk_metadata` now maps feed missing/stale, MetaScalp disconnect, and risk-stop alerts into metadata that can block new entries.
+- `apps/health_check.py` now includes normalized `alerts` in its JSON output; healthy smoke reports `alerts=[]`.
+- Decision: alerts are local/read-only records only for now; no external notification delivery or order actions were added.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 136 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-13 Storage And Daily Summary Batch
+
+- Extended `DuckDbExecutionStore` with broad local research tables for market quotes, trades, signal intents, order facts, fill facts, and PnL facts.
+- Added `llbot.storage.parquet_sink` and `apps/export_replay_parquet.py` to convert replay JSONL public market data into Parquet; smoke export wrote 4 rows to `reports/replay_smoke.parquet`.
+- Added `llbot.service.daily_summary` and `apps/daily_summary.py` to summarize runner, health, research, fill comparison, and reconciliation reports into `reports/daily_summary_smoke.json`.
+- Decision: these storage/reporting tools are offline-only and do not contact exchanges, submit/cancel orders, read secrets, or enable live trading.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 140 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-13 Lag Calibration And Feature Store Milestone
+
+- Implemented `OnlineLagCalibrator` with default candidate lags `[25, 50, 100, 200, 500, 1000]` ms.
+- Lag selection is per-symbol and deterministic, using hit rate, residual variance, and paper PnL after a minimum sample threshold.
+- Added typed `FeatureSnapshot` and `RollingFeatureStore` for residual, impulse, imbalance, spread, volatility, and latency features.
+- Decision: lag calibration and feature store are research/signal utilities only; they do not route orders or enable live trading.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 144 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-13 Binance Trade/Depth And Impulse Confirmation Milestone
+
+- Added Binance aggregate trade and partial depth stream builders/parsers for USD-M/spot stream specs.
+- Added replay JSONL support for normalized trade events.
+- `apps/collect_market.py` now supports `--binance-trade` and `--binance-depth` for public market-data capture.
+- `ImpulseTransferSignal` can optionally require recent Binance trade aggression and/or order-book imbalance before emitting an intent; defaults preserve existing behavior.
+- Decision: this is signal confirmation only and does not route, submit, or cancel orders.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 150 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-13 WebSocket Runtime Helpers Milestone
+
+- Added `llbot.service.ws_runtime` for deterministic stream sharding, planned reconnect checks, and ping/pong keepalive kwargs.
+- Binance stream specs can now be built per shard with a configurable reconnect threshold before the 24h connection limit.
+- Decision: this milestone is connection planning only; it does not add a network runner, submit/cancel orders, touch UI, or enable live trading.
+
+## 2026-05-13 Residual EWM Baseline Milestone
+
+- Added time-aware `EwmBasisStats` for residual basis mean and exponentially weighted standard deviation.
+- `ResidualZScoreSignal` now uses the EWM baseline for z-score entry decisions and records EWM mean/std/window fields in intent features.
+- Default EWM horizon is `180000` ms, inside the required 2-5 minute signal window.
+- Decision: this is signal-only and does not add MEXC protobuf parsing, MetaScalp submit/cancel behavior, UI changes, or live trading enablement.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 158 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-13 Read-Only Ops Wrap-Up Batch
+
+- Added GitHub Actions CI at `.github/workflows/ci.yml` to install the project, run unit tests, and run `compileall`.
+- Added `apps/refresh_dashboard.py` to rebuild health and dashboard artifacts from local files with explicit no-submit/no-cancel/no-secrets/no-live safety flags.
+- Added `apps/serve_dashboard.py` to serve the static dashboard only on local hosts: `127.0.0.1`, `localhost`, or `::1`.
+- Decision: refresh and serve workflows are read-only operational helpers; they do not submit/cancel orders, read secrets, open market-data sockets, or enable live trading.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 163 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.

@@ -75,6 +75,23 @@ Store reconciled MetaScalp private state in local DuckDB:
 ```
 
 The storage CLI is offline-only. It loads a reconciliation report into queryable `metascalp_orders`, `metascalp_fills`, `metascalp_positions`, `metascalp_balances`, and `metascalp_reconciliation_audit` tables. It does not open WebSocket connections, submit orders, cancel orders, or read secrets.
+The DuckDB schema also includes broad local research tables for market quotes, trades, signal intents, order facts, fill facts, and PnL facts.
+
+Export replay JSONL market data to Parquet:
+
+```powershell
+.\.venv\Scripts\python.exe apps\export_replay_parquet.py --input data\replay\smoke_binance_usdm_BTCUSDT.jsonl --input data\replay\smoke_mexc_contract_BTC_USDT.jsonl --out reports\replay_smoke.parquet
+```
+
+This is an offline conversion from local public replay files. It does not contact exchanges or MetaScalp.
+
+Build a daily summary report from existing local artifacts:
+
+```powershell
+.\.venv\Scripts\python.exe apps\daily_summary.py --runner-summary reports\metascalp_demo_runner_live_dry_both_streams.json --health reports\health_check_metascalp_smoke.json --research reports\replay_research_smoke.json --fill-compare reports\demo_fill_compare_smoke.json --reconciliation reports\metascalp_reconcile_smoke.json --out reports\daily_summary_smoke.json
+```
+
+The daily summary is read-only and reports paper counts, health alert counts, research/fill-comparison counts, reconciliation counts, and safety flags.
 
 Build a safe local health report from the latest runner summary and execution storage:
 
@@ -89,6 +106,33 @@ Include local MetaScalp discovery and connected MEXC DemoMode selection:
 ```
 
 The health check CLI reports data-feed, MetaScalp, storage, and risk-state components. It does not submit orders, cancel orders, read secrets, or enable live trading.
+Health reports also include deterministic alert records for missing/stale feeds, MetaScalp disconnects, and active risk stops. A healthy smoke should show `"alerts":[]`.
+
+Build the read-only local operations dashboard:
+
+```powershell
+.\.venv\Scripts\python.exe apps\build_dashboard.py --health reports\health_check_metascalp_smoke.json --runner-summary reports\metascalp_demo_runner_live_dry_both_streams.json --memory memory\memory.json --out reports\dashboard.html
+```
+
+The dashboard includes links to replay research, demo fill comparison, private reconciliation, and private capture summary reports when those local artifacts exist. You can add more links with repeated `--report-link "Label=path"` arguments.
+
+Open `reports\dashboard.html` in a browser. The dashboard is a static artifact generated from local JSON files; it does not run a server, submit orders, cancel orders, request secrets, or enable live trading.
+
+Refresh health and dashboard artifacts with one read-only command:
+
+```powershell
+.\.venv\Scripts\python.exe apps\refresh_dashboard.py --runner-summary reports\metascalp_demo_runner_live_dry_both_streams.json --health-out reports\health_check_metascalp_smoke.json --dashboard-out reports\dashboard.html
+```
+
+The refresh workflow runs the local health report builder and static dashboard builder. It does not submit orders, cancel orders, read secrets, or enable live trading.
+
+Serve the static dashboard on a local-only HTTP address:
+
+```powershell
+.\.venv\Scripts\python.exe apps\serve_dashboard.py --dashboard reports\dashboard.html --host 127.0.0.1 --port 8765
+```
+
+The server only serves static files from the dashboard directory and rejects non-local bind hosts.
 
 Capture MetaScalp private WebSocket updates to JSONL:
 
@@ -132,11 +176,22 @@ Hydrate the Binance/MEXC universe through public REST:
 
 These commands only read public WebSocket market data and write replay JSONL. They do not submit, cancel, or route orders.
 
+Scanner-mode WebSocket planning is implemented in `llbot.service.ws_runtime`. Use `WebSocketRuntimeConfig` to keep stream shards bounded, schedule reconnects before the 24h WebSocket limit, and pass explicit `ping_interval`/`ping_timeout` settings into websocket clients. The helper layer is deterministic and offline: it builds stream specs only and does not open sockets.
+
 Capture Binance USD-M bookTicker:
 
 ```powershell
 .\.venv\Scripts\python.exe apps\collect_market.py --venue binance-usdm --symbol BTCUSDT --events 20 --out data\replay\binance_usdm_BTCUSDT.jsonl --open-timeout-sec 30
 ```
+
+Capture Binance USD-M aggregate trades or partial depth:
+
+```powershell
+.\.venv\Scripts\python.exe apps\collect_market.py --venue binance-usdm --symbol BTCUSDT --events 20 --binance-trade --out data\replay\binance_usdm_trades_BTCUSDT.jsonl --open-timeout-sec 30
+.\.venv\Scripts\python.exe apps\collect_market.py --venue binance-usdm --symbol BTCUSDT --events 20 --binance-depth --out data\replay\binance_usdm_depth_BTCUSDT.jsonl --open-timeout-sec 30
+```
+
+Impulse-transfer signals can optionally require recent Binance trade aggression and/or order-book imbalance. These confirmations are local signal gates only; they do not submit or cancel orders.
 
 Capture MEXC contract depth/ticker:
 
@@ -175,6 +230,7 @@ Run the safe paper runner over saved replay JSONL:
 ```
 
 `apps\runner_paper.py` uses the shared paper runner service, risk gates, feed-health metadata, and paper fill models. Replay mode remains local and does not contact MetaScalp or any exchange.
+Signal research utilities now include an offline online-lag calibrator with default candidate lags `[25, 50, 100, 200, 500, 1000]` ms and a typed feature store for residual, impulse, imbalance, spread, volatility, and latency features. These utilities are deterministic and do not route orders.
 
 Run a bounded live-like paper pass over direct public WebSocket quotes:
 

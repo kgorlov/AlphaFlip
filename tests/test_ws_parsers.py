@@ -1,7 +1,15 @@
 from decimal import Decimal
 from unittest import TestCase
 
-from llbot.adapters.binance_ws import combined_book_ticker_url, parse_book_ticker_message
+from llbot.adapters.binance_ws import (
+    aggregate_trade_stream_name,
+    combined_book_ticker_url,
+    combined_stream_url,
+    parse_agg_trade_message,
+    parse_book_ticker_message,
+    parse_depth_message,
+    partial_depth_stream_name,
+)
 from llbot.adapters.mexc_contract_ws import (
     parse_message,
     subscribe_depth,
@@ -9,6 +17,7 @@ from llbot.adapters.mexc_contract_ws import (
 )
 from llbot.domain.enums import MarketType, Venue
 from llbot.domain.market_data import BookTicker, OrderBookDepth, ReceiveTimestamp
+from llbot.domain.models import Trade
 
 
 class WebSocketParserTests(TestCase):
@@ -48,6 +57,68 @@ class WebSocketParserTests(TestCase):
 
         self.assertIn("wss://fstream.binance.com/stream?streams=", spec.url)
         self.assertEqual(spec.streams, ("btcusdt@bookTicker", "ethusdt@bookTicker"))
+
+    def test_binance_trade_and_depth_stream_specs(self) -> None:
+        streams = (
+            aggregate_trade_stream_name("BTCUSDT"),
+            partial_depth_stream_name("BTCUSDT", levels=5, speed_ms=100),
+        )
+        spec = combined_stream_url(streams, MarketType.USDT_PERP)
+
+        self.assertEqual(streams, ("btcusdt@aggTrade", "btcusdt@depth5@100ms"))
+        self.assertIn("btcusdt@aggTrade/btcusdt@depth5@100ms", spec.url)
+
+    def test_binance_aggregate_trade_parser(self) -> None:
+        parsed = parse_agg_trade_message(
+            {
+                "stream": "btcusdt@aggTrade",
+                "data": {
+                    "e": "aggTrade",
+                    "E": 1001,
+                    "T": 1000,
+                    "s": "BTCUSDT",
+                    "a": 42,
+                    "p": "100.1",
+                    "q": "0.5",
+                    "m": False,
+                },
+            },
+            MarketType.USDT_PERP,
+            ReceiveTimestamp(local_ts_ms=1100, monotonic_ns=222),
+        )
+
+        self.assertIsInstance(parsed, Trade)
+        assert isinstance(parsed, Trade)
+        self.assertEqual(parsed.symbol, "BTCUSDT")
+        self.assertEqual(parsed.price, Decimal("100.1"))
+        self.assertEqual(parsed.qty, Decimal("0.5"))
+        self.assertEqual(parsed.side.value, "buy")
+        self.assertEqual(parsed.trade_id, "42")
+
+    def test_binance_depth_parser(self) -> None:
+        parsed = parse_depth_message(
+            {
+                "stream": "btcusdt@depth5@100ms",
+                "data": {
+                    "e": "depthUpdate",
+                    "E": 1001,
+                    "T": 1000,
+                    "s": "BTCUSDT",
+                    "u": 10,
+                    "b": [["100", "2"]],
+                    "a": [["101", "3"]],
+                },
+            },
+            MarketType.USDT_PERP,
+            ReceiveTimestamp(local_ts_ms=1100, monotonic_ns=222),
+        )
+
+        self.assertIsInstance(parsed, OrderBookDepth)
+        assert isinstance(parsed, OrderBookDepth)
+        self.assertEqual(parsed.venue, Venue.BINANCE)
+        self.assertEqual(parsed.symbol, "BTCUSDT")
+        self.assertEqual(parsed.version, 10)
+        self.assertEqual(parsed.bids[0].qty, Decimal("2"))
 
     def test_mexc_subscriptions(self) -> None:
         self.assertEqual(
@@ -97,4 +168,3 @@ class WebSocketParserTests(TestCase):
         self.assertEqual(parsed.version, 7)
         self.assertEqual(parsed.bids[0].price, Decimal("100"))
         self.assertEqual(parsed.asks[0].qty, Decimal("10"))
-

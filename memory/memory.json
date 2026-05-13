@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "updated_at_utc": "2026-05-13T14:04:14Z",
+  "updated_at_utc": "2026-05-13T17:19:40Z",
   "strategy_instance_id": "binance_mexc_leadlag_v1",
   "account_namespace": {
     "binance_uid": "unknown",
@@ -37,9 +37,9 @@
   "open_orders": [],
   "recent_errors": [],
   "codex_progress": {
-    "current_goal": "Prepare a real guarded MetaScalp demo order attempt from live public signal flow",
-    "last_completed_milestone": "Added safe component health checks and CLI for data feeds, MetaScalp demo connectivity, DuckDB storage, and risk state",
-    "next_required_step": "Before any demo POST, run apps/health_check.py against the latest runner summary with --discover-metascalp --select-demo-mexc, then only after explicit user confirmation of parameters and exact phrase METASCALP_DEMO_ORDER run one guarded demo order and capture/reconcile private MetaScalp updates",
+    "current_goal": "Publish the current workspace to GitHub and keep the repository clone-ready",
+    "last_completed_milestone": "Prepared repository publication setup with .gitmodules for reference gitlinks and full local validation",
+    "next_required_step": "Push master to https://github.com/kgorlov/AlphaFlip.git, then continue remaining backend tasks: z-score mean-reversion/adverse-move exits, MEXC spot protobuf parsing, or top-N live universe rotation",
     "do_not_repeat": [
       "Do not store secrets in repo files",
       "Do not put LLMs in live signal or execution paths",

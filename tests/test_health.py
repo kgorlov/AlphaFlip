@@ -11,7 +11,12 @@ from apps.health_check import run as run_health_check
 from llbot.adapters.metascalp import MetaScalpConnection, MetaScalpInstance
 from llbot.domain.enums import MarketType, Venue
 from llbot.domain.models import PortfolioState, Quote
-from llbot.monitoring.alerts import alerts_to_risk_metadata, evaluate_quote_latency
+from llbot.monitoring.alerts import (
+    alerts_to_risk_metadata,
+    evaluate_component_alerts,
+    evaluate_feed_health_alerts,
+    evaluate_quote_latency,
+)
 from llbot.monitoring.health import (
     FeedHealthDecision,
     build_system_health,
@@ -115,6 +120,46 @@ class FeedHealthTests(TestCase):
         self.assertIsNone(evaluate_quote_latency(_quote(exchange_ts_ms=None, local_ts_ms=2601), 1500))
         self.assertIsNone(evaluate_quote_latency(_quote(exchange_ts_ms=1000, local_ts_ms=2400), 1500))
 
+    def test_feed_health_alerts_map_missing_and_stale_streams_to_risk_metadata(self) -> None:
+        alerts = evaluate_feed_health_alerts(
+            FeedHealthDecision(
+                healthy=False,
+                reason="stale_stream",
+                stale_streams=("binance:BTCUSDT",),
+                missing_streams=("mexc:BTC_USDT",),
+            )
+        )
+
+        self.assertEqual([alert.alert_type for alert in alerts], ["feed_missing", "feed_stale"])
+        self.assertEqual(alerts[0].venue, "mexc")
+        self.assertEqual(alerts[0].symbol, "BTC_USDT")
+
+        metadata = alerts_to_risk_metadata(alerts)
+
+        self.assertTrue(metadata["binance_feed_stale"])
+        self.assertTrue(metadata["mexc_feed_stale"])
+
+    def test_component_alerts_cover_metascalp_disconnect_and_risk_stops(self) -> None:
+        metascalp = metascalp_component_health(_instance(), _connection(state=0))
+        risk = risk_component_health(
+            PortfolioState(
+                open_positions=0,
+                total_notional_usd=Decimal("0"),
+                daily_pnl_usd=Decimal("0"),
+                metadata={"kill_switch": True, "high_slippage": True},
+            )
+        )
+
+        alerts = [*evaluate_component_alerts(metascalp), *evaluate_component_alerts(risk)]
+
+        self.assertEqual(alerts[0].alert_type, "metascalp_disconnect")
+        self.assertEqual([alert.reason for alert in alerts[1:]], ["manual_kill_switch", "high_slippage"])
+
+        metadata = alerts_to_risk_metadata(alerts)
+        self.assertFalse(metadata["metascalp_connected"])
+        self.assertTrue(metadata["manual_kill_switch"])
+        self.assertTrue(metadata["high_slippage"])
+
     def test_component_health_aggregates_feed_metascalp_storage_and_risk(self) -> None:
         feed = feed_component_health(FeedHealthDecision(True, "ok"))
         metascalp = metascalp_component_health(_instance(), _connection())
@@ -208,10 +253,54 @@ class FeedHealthTests(TestCase):
             )
 
         self.assertEqual(payload["system"]["status"], "ok")
+        self.assertEqual(payload["alerts"], [])
         self.assertFalse(payload["safety"]["orders_submitted"])
         self.assertFalse(payload["safety"]["orders_cancelled"])
         component_names = [component["name"] for component in payload["system"]["components"]]
         self.assertEqual(component_names, ["data_feeds", "storage", "risk"])
+
+    def test_health_check_cli_run_includes_alert_records_for_feed_and_risk_stops(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            summary = Path(tmp) / "summary.json"
+            summary.write_text(
+                json.dumps(
+                    {
+                        "health": {
+                            "decision": {
+                                "healthy": False,
+                                "reason": "missing_stream",
+                                "stale_streams": [],
+                                "missing_streams": ["mexc:BTC_USDT"],
+                            }
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            payload = asyncio.run(
+                run_health_check(
+                    SimpleNamespace(
+                        runner_summary=str(summary),
+                        db=None,
+                        discover_metascalp=False,
+                        select_demo_mexc=False,
+                        open_timeout_sec=0.1,
+                        risk_metadata_json='{"kill_switch": true}',
+                        open_positions=0,
+                        total_notional_usd="0",
+                        daily_pnl_usd="0",
+                        out=None,
+                    )
+                )
+            )
+
+        self.assertEqual(payload["system"]["status"], "critical")
+        self.assertEqual([alert["alert_type"] for alert in payload["alerts"]], [
+            "feed_missing",
+            "data_feeds_critical",
+            "risk_stop",
+        ])
 
 
 def _quote(exchange_ts_ms: int | None, local_ts_ms: int) -> Quote:

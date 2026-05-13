@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lead-Lag Ops Dashboard</title>
+<style>
+
+:root {
+  color-scheme: light;
+  --bg: #f5f7f9;
+  --ink: #172026;
+  --muted: #62717c;
+  --line: #d8e0e6;
+  --panel: #ffffff;
+  --ok: #157f5b;
+  --warn: #a15c00;
+  --critical: #b3261e;
+  --unknown: #59636c;
+  --accent: #0f6b8f;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+}
+.shell {
+  width: min(1180px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 24px 0 36px;
+}
+.topbar {
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+h2 {
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.band {
+  padding: 22px 0;
+  border-bottom: 1px solid var(--line);
+}
+.status,
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid currentColor;
+  font-weight: 700;
+  line-height: 1;
+}
+.status-ok,
+.pill-ok { color: var(--ok); }
+.status-warn,
+.pill-warn { color: var(--warn); }
+.status-critical,
+.pill-critical { color: var(--critical); }
+.status-unknown,
+.pill-unknown { color: var(--unknown); }
+.table-wrap {
+  overflow-x: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+th,
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+th {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+tbody tr:last-child td { border-bottom: 0; }
+code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  color: #24323b;
+}
+.muted { color: var(--muted); }
+@media (max-width: 680px) {
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-bottom: 18px;
+  }
+  h1 { font-size: 23px; }
+  th,
+  td { padding: 9px 10px; }
+}
+
+</style>
+</head>
+<body>
+<main class="shell">
+<header class="topbar"><div><p class="eyebrow">Binance -> MEXC</p><h1>Lead-Lag Ops Dashboard</h1></div><div class="status status-ok">OK</div></header>
+<section class="band"><h2>System Health</h2><div class="table-wrap"><table><thead><tr><th>Component</th><th>Status</th><th>Reason</th><th>Metadata</th></tr></thead><tbody><tr><td>data_feeds</td><td><span class="pill pill-ok">ok</span></td><td>ok</td><td><code>{&quot;stale_streams&quot;:[],&quot;missing_streams&quot;:[]}</code></td></tr><tr><td>metascalp</td><td><span class="pill pill-ok">ok</span></td><td>ok</td><td><code>{&quot;base_url&quot;:&quot;http://127.0.0.1:17845&quot;,&quot;connection_id&quot;:4,&quot;connection_name&quot;:&quot;MEXC: Futures&quot;,&quot;exchange&quot;:&quot;MEXC&quot;,&quot;market&quot;:&quot;Futures&quot;,&quot;state&quot;:2,&quot;connected&quot;:true,&quot;demo_mode&quot;:true}</code></td></tr><tr><td>storage</td><td><span class="pill pill-ok">ok</span></td><td>ok</td><td><code>{&quot;table_counts&quot;:{&quot;orders&quot;:0,&quot;fills&quot;:0,&quot;positions&quot;:0,&quot;balances&quot;:0,&quot;audit_records&quot;:0,&quot;market_quotes&quot;:0,&quot;market_trades&quot;:0,&quot;signal_intents&quot;:0,&quot;order_facts&quot;:0,&quot;fill_facts&quot;:0,&quot;pnl_facts&quot;:0}}</code></td></tr><tr><td>risk</td><td><span class="pill pill-ok">ok</span></td><td>ok</td><td><code>{&quot;open_positions&quot;:0,&quot;daily_pnl_usd&quot;:&quot;0&quot;,&quot;total_notional_usd&quot;:&quot;0&quot;}</code></td></tr></tbody></table></div></section>
+<section class="band"><h2>Feed Streams</h2><div class="table-wrap"><table><thead><tr><th>Stream</th><th>Quotes</th><th>Max Gap Ms</th><th>Stale Gaps</th></tr></thead><tbody><tr><td>binance:BTCUSDT</td><td>6059</td><td>144</td><td>0</td></tr><tr><td>mexc:BTC_USDT</td><td>1</td><td>0</td><td>0</td></tr></tbody></table></div></section>
+<section class="band"><h2>MetaScalp</h2><div class="table-wrap"><table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody><tr><td>base_url</td><td><code>http://127.0.0.1:17845</code></td></tr><tr><td>connected</td><td><code>True</code></td></tr><tr><td>connection_id</td><td><code>4</code></td></tr><tr><td>connection_name</td><td><code>MEXC: Futures</code></td></tr><tr><td>demo_mode</td><td><code>True</code></td></tr><tr><td>submit_allowed</td><td><code>False</code></td></tr></tbody></table></div></section>
+<section class="band"><h2>Paper Summary</h2><div class="table-wrap"><table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody><tr><td>audit_records</td><td><code>0</code></td></tr><tr><td>closed_positions</td><td><code>0</code></td></tr><tr><td>fills</td><td><code>0</code></td></tr><tr><td>gross_realized_pnl_usd</td><td><code>0</code></td></tr><tr><td>gross_unrealized_pnl_usd</td><td><code>0</code></td></tr><tr><td>intent_counts</td><td><code>{}</code></td></tr><tr><td>intents</td><td><code>0</code></td></tr><tr><td>not_filled</td><td><code>0</code></td></tr><tr><td>open_positions</td><td><code>0</code></td></tr><tr><td>processed_events</td><td><code>6060</code></td></tr><tr><td>quotes</td><td><code>6060</code></td></tr><tr><td>realized_cost_usd</td><td><code>0</code></td></tr><tr><td>realized_pnl_usd</td><td><code>0</code></td></tr><tr><td>risk_allowed</td><td><code>0</code></td></tr><tr><td>risk_blocked</td><td><code>0</code></td></tr><tr><td>skipped_events</td><td><code>0</code></td></tr><tr><td>unrealized_cost_usd</td><td><code>0</code></td></tr><tr><td>unrealized_pnl_usd</td><td><code>0</code></td></tr></tbody></table></div></section>
+<section class="band"><h2>Reports</h2><div class="table-wrap"><table><thead><tr><th>Report</th><th>Status</th><th>Path</th><th>Bytes</th></tr></thead><tbody><tr><td>Replay Research</td><td><span class="pill pill-exists">exists</span></td><td><a href="reports/replay_research_smoke.json">reports/replay_research_smoke.json</a></td><td>1978</td></tr><tr><td>Demo Fill Compare</td><td><span class="pill pill-exists">exists</span></td><td><a href="reports/demo_fill_compare_smoke.json">reports/demo_fill_compare_smoke.json</a></td><td>380</td></tr><tr><td>Private Reconciliation</td><td><span class="pill pill-exists">exists</span></td><td><a href="reports/metascalp_reconcile_smoke.json">reports/metascalp_reconcile_smoke.json</a></td><td>1747</td></tr><tr><td>Private Capture Summary</td><td><span class="pill pill-exists">exists</span></td><td><a href="reports/metascalp_private_capture_store_smoke.json">reports/metascalp_private_capture_store_smoke.json</a></td><td>615</td></tr></tbody></table></div></section>
+<section class="band"><h2>Safety</h2><div class="table-wrap"><table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody><tr><td>live_trading_enabled</td><td><code>False</code></td></tr><tr><td>orders_cancelled</td><td><code>False</code></td></tr><tr><td>orders_submitted</td><td><code>False</code></td></tr><tr><td>secrets_read</td><td><code>False</code></td></tr></tbody></table></div></section>
+<section class="band"><h2>Progress</h2><div class="table-wrap"><table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody><tr><td>current_goal</td><td><code>Close remaining small operational and backend tasks while keeping execution guarded</code></td></tr><tr><td>do_not_repeat</td><td><code>[&quot;Do not store secrets in repo files&quot;,&quot;Do not put LLMs in live signal or execution paths&quot;,&quot;Do not trust Binance as leader without dynamic validation&quot;,&quot;Do not execute orders from market-data collectors&quot;]</code></td></tr><tr><td>last_completed_milestone</td><td><code>Closed three read-only operational tasks: CI workflow, manual dashboard refresh, and local-only dashboard server</code></td></tr><tr><td>next_required_step</td><td><code>Continue remaining backend tasks: z-score mean-reversion/adverse-move exits, MEXC spot protobuf parsing, or top-N live universe rotation</code></td></tr></tbody></table></div></section>
+</main>
+</body>
+</html>

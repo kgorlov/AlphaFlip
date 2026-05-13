@@ -2,46 +2,37 @@
 
 ## Objective
 
-Add safe health checks for public data feeds, MetaScalp demo connectivity, DuckDB execution storage, and risk-state metadata.
+Publish the current workspace to `https://github.com/kgorlov/AlphaFlip.git` and make the repository clone-ready.
 
 ## Files
 
-- `llbot/monitoring/health.py`
-- `apps/health_check.py`
-- `tests/test_health.py`
-- `docs/RUNBOOK.md`
-- `TASKS.md`
+- `.gitmodules`
 - `memory/memory.json`
 - `memory/notes.md`
+- `reports/current_execplan.md`
 - `reports/latest_test_report.md`
 
 ## Acceptance Checks
 
-- Feed health converts existing runner health decisions into component status.
-- MetaScalp health reports critical when no instance/connection exists or when the selected connection is not connected/demo as required.
-- Storage health reports table counts and flags storage probe failures.
-- Risk health maps active safety metadata flags into a critical component.
-- CLI can build a no-order health report from an existing runner summary JSON.
-- No order submit, cancel, private secrets, or live trading enablement is added.
+- `origin` points to `https://github.com/kgorlov/AlphaFlip.git`.
+- Reference repositories under `references/trading-bot-basis/` have `.gitmodules` entries matching their existing remotes.
+- No tracked secret files are detected.
 - Full `python -m unittest discover -s tests` passes.
 - `python -m compileall llbot apps tests` passes.
+- Current branch is pushed to GitHub.
 
 ## Status
 
-Completed on 2026-05-13.
+In progress on 2026-05-13.
 
 ## Validation
 
-- `.\.venv\Scripts\python.exe -m unittest tests.test_health`: passed, 9 tests.
-- `.\.venv\Scripts\python.exe apps\health_check.py --runner-summary reports\metascalp_demo_runner_live_dry_both_streams.json --db reports\health_check_smoke.duckdb --out reports\health_check_smoke.json`: passed, no order submit/cancel, system status `ok`.
-- `.\.venv\Scripts\python.exe apps\health_check.py --runner-summary reports\metascalp_demo_runner_live_dry_both_streams.json --discover-metascalp --select-demo-mexc --open-timeout-sec 2 --db reports\health_check_smoke.duckdb --out reports\health_check_metascalp_smoke.json`: passed, MetaScalp connection `4` status `ok`, no order submit/cancel.
-- `.\.venv\Scripts\python.exe -m unittest discover -s tests`: passed, 129 tests.
+- `git ls-files | Select-String -Pattern '(^|/)(\.env|.*\.env|.*\.pem|.*\.key|secrets/|local/)'`: no tracked secret files detected.
+- `.\.venv\Scripts\python.exe -m unittest discover -s tests`: passed, 163 tests.
 - `.\.venv\Scripts\python.exe -m compileall llbot apps tests`: passed.
-- `.\.venv\Scripts\python.exe -m json.tool reports\health_check_smoke.json`: passed.
-- `.\.venv\Scripts\python.exe -m json.tool reports\health_check_metascalp_smoke.json`: passed.
 
 ## Non-Goals
 
-- No live/demo order submission.
-- No private credentials or local MetaScalp settings stored in repo.
-- No alert delivery integration beyond health report generation.
+- No trading logic changes for this publication step.
+- No MetaScalp submit/cancel changes.
+- No live trading changes.

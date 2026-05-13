@@ -14,6 +14,7 @@ if __package__ is None or __package__ == "":
 from llbot.adapters.http_client import AioHttpJsonClient
 from llbot.adapters.metascalp import MetaScalpClient, discover_metascalp
 from llbot.domain.models import PortfolioState
+from llbot.monitoring.alerts import alert_to_dict, evaluate_component_alerts, evaluate_feed_health_alerts
 from llbot.monitoring.health import (
     FeedHealthDecision,
     build_system_health,
@@ -67,7 +68,10 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
     }
 
     if args.runner_summary:
-        components.append(feed_component_health(feed_decision_from_runner_summary(args.runner_summary)))
+        feed_decision = feed_decision_from_runner_summary(args.runner_summary)
+        components.append(feed_component_health(feed_decision))
+    else:
+        feed_decision = None
 
     if args.discover_metascalp:
         components.append(
@@ -81,8 +85,14 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         components.append(_probe_storage(args.db))
 
     components.append(risk_component_health(_risk_state_from_args(args)))
+    alerts = []
+    if feed_decision is not None:
+        alerts.extend(evaluate_feed_health_alerts(feed_decision))
+    for component in components:
+        alerts.extend(evaluate_component_alerts(component))
     return {
         "system": system_health_to_dict(build_system_health(components)),
+        "alerts": [alert_to_dict(alert) for alert in alerts],
         "safety": safety,
     }
 

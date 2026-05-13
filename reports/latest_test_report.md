@@ -1,5 +1,41 @@
 # Latest Test Report
 
+## 2026-05-13 Repository Publication Setup
+
+Tracked secret-file check:
+
+```text
+git ls-files | Select-String -Pattern '(^|/)(\.env|.*\.env|.*\.pem|.*\.key|secrets/|local/)'
+```
+
+Result: no tracked secret files detected.
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 163 tests in 1.312s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Repository setup:
+
+- Added `.gitmodules` entries for all existing reference gitlinks under `references/trading-bot-basis/`.
+- Prepared the local repository for `https://github.com/kgorlov/AlphaFlip.git` as the `origin` remote.
+
 ## 2026-05-13 Deep Research Milestone
 
 Command:
@@ -1473,3 +1509,452 @@ Coverage added:
 - component health checks for data feeds, MetaScalp, DuckDB storage, and risk state;
 - aggregate system health status with JSON serialization;
 - safe `apps\health_check.py` CLI that reports explicit no-submit/no-cancel/no-secrets/no-live safety flags.
+
+## 2026-05-13 Read-Only Dashboard UI Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_dashboard
+```
+
+Result:
+
+```text
+Ran 3 tests in 0.006s
+OK
+```
+
+Dashboard build smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\build_dashboard.py --health reports\health_check_metascalp_smoke.json --runner-summary reports\metascalp_demo_runner_live_dry_both_streams.json --memory memory\memory.json --out reports\dashboard.html
+```
+
+Result:
+
+```text
+{"out":"reports\\dashboard.html","read_only":true,"orders_submitted":false,"orders_cancelled":false,"live_trading_enabled":false}
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 132 tests in 0.642s
+OK
+```
+
+Additional checks:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+Select-String -Path reports\dashboard.html -Pattern "Lead-Lag Ops Dashboard|data_feeds|metascalp|orders_submitted|submit-demo|<button"
+```
+
+Result: pass. Expected dashboard sections were present; no `<button` or `submit-demo` control surface was present.
+
+Coverage added:
+
+- `llbot.monitoring.dashboard` static HTML rendering from health, runner, and memory artifacts;
+- `apps\build_dashboard.py` read-only dashboard builder;
+- explicit `TASKS.md` operator UI track with read-only safety constraints.
+
+## 2026-05-13 Dashboard Report Links Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_dashboard
+```
+
+Result:
+
+```text
+Ran 4 tests in 0.006s
+OK
+```
+
+Dashboard build smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\build_dashboard.py --health reports\health_check_metascalp_smoke.json --runner-summary reports\metascalp_demo_runner_live_dry_both_streams.json --memory memory\memory.json --out reports\dashboard.html
+```
+
+Result: pass, dashboard includes existing local links to replay research, demo fill comparison, private reconciliation, and private capture summary reports.
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 133 tests in 0.624s
+OK
+```
+
+Additional checks:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+Select-String -Path reports\dashboard.html -Pattern "Reports|Replay Research|Demo Fill Compare|Private Reconciliation|Private Capture Summary|<button|submit-demo"
+```
+
+Result: pass. Expected report links were present; no `<button` or `submit-demo` control surface was present.
+
+Coverage added:
+
+- dashboard report-link model with exists/missing status and size metadata;
+- default dashboard links for replay research, demo fill comparison, MetaScalp reconciliation, and private capture summary;
+- repeated `--report-link "Label=path"` CLI extension for local read-only report links.
+
+## 2026-05-13 Monitoring Alerts Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_health
+```
+
+Result:
+
+```text
+Ran 12 tests in 0.087s
+OK
+```
+
+Health check smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\health_check.py --runner-summary reports\metascalp_demo_runner_live_dry_both_streams.json --discover-metascalp --select-demo-mexc --open-timeout-sec 2 --db reports\health_check_smoke.duckdb --out reports\health_check_metascalp_smoke.json
+```
+
+Result: pass, system `ok`, `alerts=[]`, no order submit/cancel, no secrets, live trading disabled.
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 136 tests in 0.588s
+OK
+```
+
+Additional checks:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+.\.venv\Scripts\python.exe -m json.tool reports\health_check_metascalp_smoke.json
+```
+
+Result: pass.
+
+Coverage added:
+
+- missing/stale feed alert evaluation from feed-health decisions;
+- MetaScalp disconnect/not-found critical component alerts;
+- risk-stop alerts for active safety block reasons;
+- `apps\health_check.py` now emits normalized alert records in its JSON report.
+
+## 2026-05-13 Storage And Daily Summary Batch
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_duckdb_store tests.test_parquet_sink tests.test_daily_summary
+```
+
+Result:
+
+```text
+Ran 6 tests in 0.767s
+OK
+```
+
+Parquet smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\export_replay_parquet.py --input data\replay\smoke_binance_usdm_BTCUSDT.jsonl --input data\replay\smoke_mexc_contract_BTC_USDT.jsonl --out reports\replay_smoke.parquet
+```
+
+Result:
+
+```text
+{"rows":4,"path":"reports\\replay_smoke.parquet"}
+```
+
+Daily summary smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\daily_summary.py --runner-summary reports\metascalp_demo_runner_live_dry_both_streams.json --health reports\health_check_metascalp_smoke.json --research reports\replay_research_smoke.json --fill-compare reports\demo_fill_compare_smoke.json --reconciliation reports\metascalp_reconcile_smoke.json --out reports\daily_summary_smoke.json
+```
+
+Result: pass, wrote paper, health, research, fill comparison, reconciliation, and safety summary sections.
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 140 tests in 0.855s
+OK
+```
+
+Additional checks:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+.\.venv\Scripts\python.exe -m json.tool reports\daily_summary_smoke.json
+```
+
+Result: pass.
+
+Coverage added:
+
+- broad DuckDB research schema for `market_quotes`, `market_trades`, `signal_intents`, `order_facts`, `fill_facts`, and `pnl_facts`;
+- replay JSONL to Parquet sink and CLI;
+- daily summary service and CLI built from existing local report artifacts.
+
+## 2026-05-13 Lag Calibration And Feature Store Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_lag_calibrator tests.test_signal_models
+```
+
+Result:
+
+```text
+Ran 8 tests in 0.001s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 144 tests in 0.870s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Coverage added:
+
+- online lag calibrator with default candidate lags `[25, 50, 100, 200, 500, 1000]` ms;
+- deterministic per-symbol lag selection by hit rate, residual variance, and paper PnL;
+- typed rolling feature store for residual, impulse, imbalance, spread, volatility, and latency features.
+
+## 2026-05-13 Binance Trade/Depth And Impulse Confirmation Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_ws_parsers tests.test_replay_jsonl tests.test_signal_models
+```
+
+Result:
+
+```text
+Ran 18 tests in 0.009s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 150 tests in 0.966s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Coverage added:
+
+- Binance aggregate trade and partial depth stream builders/parsers;
+- replay JSONL trade event persistence/readback;
+- optional impulse-transfer confirmation by Binance trade aggression and/or order-book imbalance;
+- collector CLI flags `--binance-trade` and `--binance-depth`.
+
+## 2026-05-13 WebSocket Runtime Helpers Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_ws_runtime
+```
+
+Result:
+
+```text
+Ran 6 tests in 0.000s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 156 tests in 0.886s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Coverage added:
+
+- deterministic WebSocket stream sharding for scanner mode;
+- Binance combined stream spec generation per shard;
+- planned reconnect decision helper for reconnect-before-24h policy;
+- explicit ping/pong keepalive kwargs for websocket clients.
+
+## 2026-05-13 Residual EWM Baseline Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_signal_models
+```
+
+Result:
+
+```text
+Ran 9 tests in 0.002s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 158 tests in 1.109s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Coverage added:
+
+- time-aware EWM basis mean and variance tracker for residual z-score signals;
+- residual signal intent features for EWM mean, EWM standard deviation, and EWM window;
+- invalid EWM horizon validation.
+
+## 2026-05-13 Read-Only Ops Wrap-Up Batch
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_dashboard_ops
+```
+
+Result:
+
+```text
+Ran 5 tests in 0.003s
+OK
+```
+
+Manual refresh smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\refresh_dashboard.py --runner-summary reports\metascalp_demo_runner_live_dry_both_streams.json --health-out reports\health_check_metascalp_smoke.json --dashboard-out reports\dashboard.html --discover-metascalp --select-demo-mexc
+```
+
+Result: pass. Rebuilt health and dashboard outputs with MetaScalp demo connection `4`, `orders_submitted=false`, `orders_cancelled=false`, `secrets_read=false`, and `live_trading_enabled=false`.
+
+Local-only server guard smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\serve_dashboard.py --host 0.0.0.0 --dashboard reports\dashboard.html
+```
+
+Result: rejected non-local host as expected.
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 163 tests in 2.388s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Coverage added:
+
+- GitHub Actions CI workflow for unit tests and compile check;
+- read-only dashboard refresh CLI;
+- local-only static dashboard server wrapper and host validation.

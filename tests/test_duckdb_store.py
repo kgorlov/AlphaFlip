@@ -4,6 +4,9 @@ from pathlib import Path
 from unittest import TestCase
 
 from llbot.storage.duckdb_store import DuckDbExecutionStore
+from llbot.storage.replay_jsonl import replay_event_from_book_ticker
+from llbot.domain.enums import MarketType, Venue
+from llbot.domain.market_data import BookTicker
 
 
 class DuckDbExecutionStoreTests(TestCase):
@@ -31,6 +34,12 @@ class DuckDbExecutionStoreTests(TestCase):
                         "positions": 1,
                         "balances": 1,
                         "audit_records": 2,
+                        "market_quotes": 0,
+                        "market_trades": 0,
+                        "signal_intents": 0,
+                        "order_facts": 0,
+                        "fill_facts": 0,
+                        "pnl_facts": 0,
                     },
                 )
                 order = store.query_all(
@@ -69,8 +78,30 @@ class DuckDbExecutionStoreTests(TestCase):
                         "positions": 1,
                         "balances": 1,
                         "audit_records": 2,
+                        "market_quotes": 0,
+                        "market_trades": 0,
+                        "signal_intents": 0,
+                        "order_facts": 0,
+                        "fill_facts": 0,
+                        "pnl_facts": 0,
                     },
                 )
+
+    def test_broad_schema_ingests_market_and_audit_facts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            db_path = Path(tmp) / "facts.duckdb"
+            with DuckDbExecutionStore(db_path) as store:
+                market = store.ingest_replay_events([_book_event()], source="market")
+                audit = store.ingest_audit_records([_signal_record(), _exit_record()], source="audit")
+
+                self.assertEqual(market, {"market_quotes": 1, "market_trades": 0})
+                self.assertEqual(
+                    audit,
+                    {"signal_intents": 1, "order_facts": 1, "fill_facts": 1, "pnl_facts": 1},
+                )
+                self.assertEqual(store.query_all("SELECT symbol, bid_price FROM market_quotes")[0][0], "BTCUSDT")
+                self.assertEqual(store.query_all("SELECT intent_id FROM signal_intents")[0][0], "intent-1")
+                self.assertEqual(store.query_all("SELECT net_pnl_usd FROM pnl_facts")[0][0], Decimal("1.230000000000000000"))
 
 
 def _report() -> dict:
@@ -133,4 +164,59 @@ def _report() -> dict:
                 "raw": {"Asset": "USDT"},
             }
         ],
+    }
+
+
+def _book_event():
+    return replay_event_from_book_ticker(
+        BookTicker(
+            venue=Venue.BINANCE,
+            market=MarketType.USDT_PERP,
+            symbol="BTCUSDT",
+            bid_price=Decimal("100"),
+            bid_qty=Decimal("1"),
+            ask_price=Decimal("101"),
+            ask_qty=Decimal("2"),
+            timestamp_ms=10,
+            local_ts_ms=11,
+            raw={},
+        )
+    )
+
+
+def _signal_record() -> dict:
+    return {
+        "event_type": "replay_signal_decision",
+        "intent_id": "intent-1",
+        "symbol": "BTCUSDT",
+        "mode": "paper",
+        "intent_type": "enter_long",
+        "side": "buy",
+        "model": "impulse",
+        "expected_edge_bps": "8",
+        "decision_result": "filled",
+        "risk_allowed": True,
+        "risk_reason": "ok",
+        "fill_filled": True,
+        "fill_qty": "1",
+        "fill_price": "100.5",
+        "fill_reason": "touch",
+        "order_request": {
+            "symbol": "BTC_USDT",
+            "side": "buy",
+            "qty": "1",
+            "price_cap": "100.5",
+        },
+        "order_response": {"client_order_id": "llb-1"},
+    }
+
+
+def _exit_record() -> dict:
+    return {
+        "event_type": "replay_position_exit",
+        "symbol": "BTCUSDT",
+        "exit_reason": "ttl_exit",
+        "gross_pnl_usd": "1.5",
+        "cost_usd": "0.27",
+        "realized_pnl_usd": "1.23",
     }

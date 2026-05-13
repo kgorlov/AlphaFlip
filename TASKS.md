@@ -50,13 +50,13 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 - [x] Implement Binance spot WebSocket adapter.
 - [x] Implement Binance USD-M futures WebSocket adapter.
 - [x] Use Binance individual `<symbol>@bookTicker` for low-latency signal paths.
-- [ ] Implement Binance trade/depth streams for advanced features.
+- [x] Implement Binance trade/depth streams for advanced features.
 - [ ] Implement MEXC spot WebSocket adapter with protobuf parser.
 - [x] Implement MEXC contract WebSocket adapter.
 - [x] Add direct REST snapshot hydration for order book recovery.
-- [ ] Add WebSocket sharding for full scanner mode.
-- [ ] Add reconnect-after-24h handling.
-- [ ] Add ping/pong keepalive handling.
+- [x] Add WebSocket sharding for full scanner mode.
+- [x] Add reconnect-after-24h handling.
+- [x] Add ping/pong keepalive handling.
 - [ ] Add stale-data detection per symbol and venue.
 - [x] Add bounded direct WebSocket paper quote loop for Binance USD-M and MEXC contract ticker.
 - [x] Log exchange timestamps and local receive timestamps.
@@ -67,18 +67,18 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 
 - [x] Implement Algorithm A: residual z-score on normalized basis.
 - [x] Calculate `basis_t = log(mid_mexc) - beta_t * log(mid_binance)`.
-- [ ] Maintain EMA mean and EWMSTD over a 2-5 minute window.
+- [x] Maintain EMA mean and EWMSTD over a 2-5 minute window.
 - [x] Enter long when Binance moved up, MEXC residual is too low, and net edge is positive.
 - [x] Enter short when Binance moved down, MEXC residual is too high, and net edge is positive.
 - [ ] Exit on z-score mean reversion, hard TTL, stale data, or adverse move.
 - [x] Implement Algorithm B: event-driven impulse transfer.
 - [x] Calculate Binance impulse over windows `[50, 100, 200, 500] ms`.
-- [ ] Confirm impulse with trade aggression and/or order-book imbalance.
+- [x] Confirm impulse with trade aggression and/or order-book imbalance.
 - [x] Calculate transferred move, MEXC lag, and net edge in bps.
-- [ ] Implement Algorithm C: online lag calibration.
-- [ ] Track candidate lags `[25, 50, 100, 200, 500, 1000] ms`.
-- [ ] Select per-symbol lag horizon by rolling hit rate, residual variance, and paper PnL.
-- [ ] Add feature store for residual, impulse, imbalance, spread, volatility, and latency features.
+- [x] Implement Algorithm C: online lag calibration.
+- [x] Track candidate lags `[25, 50, 100, 200, 500, 1000] ms`.
+- [x] Select per-symbol lag horizon by rolling hit rate, residual variance, and paper PnL.
+- [x] Add feature store for residual, impulse, imbalance, spread, volatility, and latency features.
 - [x] Add dynamic empirical leadership scorer for Binance/MEXC midpoint paths.
 - [x] Reject unstable/noisy leader scoring before signal execution.
 
@@ -161,9 +161,9 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 
 ## 10. Storage, Audit, And Monitoring
 
-- [ ] Design DuckDB schema for quotes, trades, intents, orders, fills, positions, and PnL.
+- [x] Design DuckDB schema for quotes, trades, intents, orders, fills, positions, and PnL.
 - [x] Add DuckDB storage for reconciled MetaScalp orders, fills, positions, balances, and audit records.
-- [ ] Add Parquet sink for replayable market data.
+- [x] Add Parquet sink for replayable market data.
 - [x] Add redacted structured JSONL logger.
 - [ ] Log every signal, including skipped signals.
 - [ ] Log Binance bid, ask, mid, and timestamps.
@@ -177,7 +177,7 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 - [ ] Log realized and simulated PnL.
 - [x] Log replay-paper fill data, exit reason, gross/cost/net realized PnL, and MTM PnL.
 - [x] Stream bounded live-paper audit JSONL records as decisions/exits are created.
-- [ ] Add daily summary report.
+- [x] Add daily summary report.
 - [x] Persist replay-paper summary JSON for research comparison.
 - [x] Add replay research report with per-symbol/day summary slices.
 - [x] Add replay feed-health metrics for quote gaps and stale-gap counts.
@@ -186,7 +186,7 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 - [x] Audit risk-blocked replay entries caused by missing/stale feeds.
 - [x] Add health checks for data feeds, MetaScalp, storage, and risk state.
 - [x] Add feed-health summary JSON for replay/live-like paper runner outputs.
-- [ ] Add alerts for stale feeds, disconnects, and risk stops.
+- [x] Add alerts for stale feeds, disconnects, and risk stops.
 
 ## 11. Replay And Testing
 
@@ -201,7 +201,7 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 - [x] Test residual z-score signal.
 - [x] Test impulse transfer signal.
 - [x] Test dynamic leadership scoring.
-- [ ] Test online lag calibration.
+- [x] Test online lag calibration.
 - [x] Test long/short symmetry.
 - [x] Test stale-data filter.
 - [x] Test fee/slippage calculations.
@@ -237,4 +237,15 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 - [x] Maintain compact project memory in `memory/memory.json`.
 - [x] Add memory pruning test.
 - [x] Add replay smoke report artifact.
-- [ ] Add CI pipeline for unit tests and fast integration checks.
+- [x] Add CI pipeline for unit tests and fast integration checks.
+
+## 14. Operator UI
+
+- [x] Add a read-only local operations dashboard generated from health, runner, and memory artifacts.
+- [x] Show data-feed health, MetaScalp demo connection state, storage table counts, risk state, and paper summary.
+- [x] Keep UI read-only: no submit order, cancel order, secret input, or live trading controls.
+- [x] Add dashboard links to latest replay research, fill comparison, and private reconciliation reports.
+- [ ] Add historical sparklines for feed gaps, intents, fills, PnL, and health state from stored reports.
+- [x] Add a manual refresh workflow that rebuilds health checks and the dashboard without executing orders.
+- [x] Add an optional local-only web server wrapper after the static dashboard is stable.
+- [ ] Add UI smoke screenshot checks across desktop and mobile viewports.
