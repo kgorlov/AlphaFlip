@@ -29,6 +29,12 @@ Documentation added:
 - Wiki source pages under `docs/wiki/` for Home, Architecture, Safety, Operations, Development, and Research/Roadmap.
 - `_Sidebar.md` for GitHub Wiki navigation.
 
+Publication:
+
+- Pushed README and wiki source pages to `origin/master`.
+- Attempted to clone `https://github.com/kgorlov/AlphaFlip.wiki.git`; GitHub returned `Repository not found`.
+- `gh` is not installed locally, so wiki enablement could not be automated from this environment.
+
 ## 2026-05-13 Repository Publication Setup
 
 Tracked secret-file check:

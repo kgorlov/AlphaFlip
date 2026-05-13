@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "updated_at_utc": "2026-05-13T17:25:00Z",
+  "updated_at_utc": "2026-05-13T17:27:00Z",
   "strategy_instance_id": "binance_mexc_leadlag_v1",
   "account_namespace": {
     "binance_uid": "unknown",
@@ -37,9 +37,9 @@
   "open_orders": [],
   "recent_errors": [],
   "codex_progress": {
-    "current_goal": "Publish README and wiki documentation for AlphaFlip",
-    "last_completed_milestone": "Added README and wiki source pages with full local validation",
-    "next_required_step": "Push README/wiki source to the main repository and publish docs/wiki pages to GitHub Wiki when available",
+    "current_goal": "Continue remaining backend tasks while keeping documentation current",
+    "last_completed_milestone": "Published README and docs/wiki source pages to the main repository; GitHub Wiki repo is not currently available",
+    "next_required_step": "Enable GitHub Wiki in repository settings if a separate wiki is desired, then copy docs/wiki pages into AlphaFlip.wiki.git; otherwise continue backend tasks",
     "do_not_repeat": [
       "Do not store secrets in repo files",
       "Do not put LLMs in live signal or execution paths",

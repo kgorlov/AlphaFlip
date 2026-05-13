@@ -30,14 +30,15 @@ Add user-facing repository documentation: root README and GitHub Wiki pages.
 
 ## Status
 
-In progress on 2026-05-13.
+Completed on 2026-05-13.
 
 ## Validation
 
 - `.\.venv\Scripts\python.exe -m unittest discover -s tests`: passed, 163 tests.
 - `.\.venv\Scripts\python.exe -m compileall llbot apps tests`: passed.
-- GitHub repository push: pending.
-- GitHub Wiki push: pending.
+- `git push`: passed; README and `docs/wiki/` source are on `origin/master`.
+- GitHub Wiki push: blocked because `https://github.com/kgorlov/AlphaFlip.wiki.git` returned `Repository not found`.
+- GitHub CLI wiki enable attempt: blocked because `gh` is not installed in this environment.
 
 ## Non-Goals
 
