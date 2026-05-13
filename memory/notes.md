@@ -20,6 +20,8 @@
 - Configured repository settings through `gh`: description, homepage URL, Issues enabled, Projects enabled, Wiki enabled, and topics (`trading-bot`, `lead-lag`, `binance`, `mexc`, `metascalp`, `paper-trading`, `python`).
 - Ran `gh auth setup-git`; main repo HTTPS git access works.
 - Retried `AlphaFlip.wiki.git` after confirming `hasWikiEnabled=true`; GitHub still returns `Repository not found`, so a first wiki page likely needs to be created through the GitHub web UI before the wiki git repository exists.
+- After the first wiki page was created through the web UI, `AlphaFlip.wiki.git` became cloneable.
+- Synced all tracked `docs/wiki/*.md` pages to GitHub Wiki and pushed wiki commit `6dcd9ef Sync AlphaFlip wiki pages`.
 
 ## 2026-05-13 Repository Publication Setup
 

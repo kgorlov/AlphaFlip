@@ -38,6 +38,8 @@ Publication:
 - Configured repository description, homepage URL, Issues, Projects, Wiki, and topics through `gh repo edit`.
 - Ran `gh auth setup-git`; main repository HTTPS git access works.
 - Retried `AlphaFlip.wiki.git` clone after confirming `hasWikiEnabled=true`; GitHub still returned `Repository not found`, so the separate wiki git repository has not been created by GitHub yet.
+- After the first wiki page was created through GitHub web UI, cloned `https://github.com/kgorlov/AlphaFlip.wiki.git`.
+- Synced `docs/wiki/*.md` into the GitHub Wiki and pushed wiki commit `6dcd9ef Sync AlphaFlip wiki pages`.
 
 ## 2026-05-13 Repository Publication Setup
 

@@ -43,6 +43,8 @@ Completed on 2026-05-13.
 - Repository settings configured with description, homepage, issues enabled, projects enabled, wiki enabled, and repository topics.
 - `gh auth setup-git`: passed; main repository git HTTPS access works.
 - GitHub Wiki retry after `--enable-wiki=true`: still blocked because `https://github.com/kgorlov/AlphaFlip.wiki.git` returns `Repository not found`.
+- After the first web-created wiki page, `https://github.com/kgorlov/AlphaFlip.wiki.git` became available.
+- Synced `docs/wiki/*.md` to `AlphaFlip.wiki.git` in wiki commit `6dcd9ef Sync AlphaFlip wiki pages`.
 
 ## Non-Goals
 
