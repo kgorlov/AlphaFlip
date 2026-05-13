@@ -1,5 +1,34 @@
 # Latest Test Report
 
+## 2026-05-13 README And Wiki Documentation
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 163 tests in 2.303s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Documentation added:
+
+- `README.md` with project purpose, safety defaults, setup, validation, common safe commands, and status.
+- Wiki source pages under `docs/wiki/` for Home, Architecture, Safety, Operations, Development, and Research/Roadmap.
+- `_Sidebar.md` for GitHub Wiki navigation.
+
 ## 2026-05-13 Repository Publication Setup
 
 Tracked secret-file check:

@@ -2,11 +2,17 @@
 
 ## Objective
 
-Publish the current workspace to `https://github.com/kgorlov/AlphaFlip.git` and make the repository clone-ready.
+Add user-facing repository documentation: root README and GitHub Wiki pages.
 
 ## Files
 
-- `.gitmodules`
+- `README.md`
+- `docs/wiki/Home.md`
+- `docs/wiki/Architecture.md`
+- `docs/wiki/Safety.md`
+- `docs/wiki/Operations.md`
+- `docs/wiki/Development.md`
+- `docs/wiki/Research-and-Roadmap.md`
 - `memory/memory.json`
 - `memory/notes.md`
 - `reports/current_execplan.md`
@@ -14,26 +20,27 @@ Publish the current workspace to `https://github.com/kgorlov/AlphaFlip.git` and 
 
 ## Acceptance Checks
 
-- `origin` points to `https://github.com/kgorlov/AlphaFlip.git`.
-- Reference repositories under `references/trading-bot-basis/` have `.gitmodules` entries matching their existing remotes.
-- No tracked secret files are detected.
+- README explains purpose, safety defaults, setup, validation, core commands, and project layout.
+- Wiki pages cover architecture, safety, operations, development, and research roadmap.
+- Documentation does not include secrets, live-trading enablement, or unsupported private endpoint guidance.
 - Full `python -m unittest discover -s tests` passes.
 - `python -m compileall llbot apps tests` passes.
-- Current branch is pushed to GitHub.
+- Documentation changes are pushed to GitHub.
+- Wiki pages are pushed to GitHub Wiki when the wiki repository is available.
 
 ## Status
 
-Completed on 2026-05-13.
+In progress on 2026-05-13.
 
 ## Validation
 
-- `git ls-files | Select-String -Pattern '(^|/)(\.env|.*\.env|.*\.pem|.*\.key|secrets/|local/)'`: no tracked secret files detected.
 - `.\.venv\Scripts\python.exe -m unittest discover -s tests`: passed, 163 tests.
 - `.\.venv\Scripts\python.exe -m compileall llbot apps tests`: passed.
-- `git push -u origin master`: passed; `master` now tracks `origin/master`.
+- GitHub repository push: pending.
+- GitHub Wiki push: pending.
 
 ## Non-Goals
 
-- No trading logic changes for this publication step.
+- No trading logic changes.
 - No MetaScalp submit/cancel changes.
 - No live trading changes.

@@ -8,6 +8,13 @@
 - Never put an LLM in the live signal or execution path.
 - Validate Binance leadership dynamically per symbol/window instead of assuming it globally.
 
+## 2026-05-13 README And Wiki Documentation
+
+- Added root `README.md` as the repository entry point with safety defaults, setup, validation, common commands, and status.
+- Added wiki source pages under `docs/wiki/` for Home, Architecture, Safety, Operations, Development, and Research/Roadmap.
+- Added `docs/wiki/_Sidebar.md` so the same pages can be copied into GitHub Wiki with navigation.
+- Decision: keep wiki source tracked in the main repository even when GitHub Wiki is published separately.
+
 ## 2026-05-13 Repository Publication Setup
 
 - Configured the local repository for publication to `https://github.com/kgorlov/AlphaFlip.git`.
