@@ -16,6 +16,10 @@
 - Decision: keep wiki source tracked in the main repository even when GitHub Wiki is published separately.
 - Pushed README and wiki source to `origin/master`.
 - GitHub Wiki publication is blocked until the separate wiki repository exists; `https://github.com/kgorlov/AlphaFlip.wiki.git` returned `Repository not found`, and `gh` is not installed locally to enable wiki settings.
+- Installed GitHub CLI `gh` 2.92.0 in the user profile and authenticated as `kgorlov`.
+- Configured repository settings through `gh`: description, homepage URL, Issues enabled, Projects enabled, Wiki enabled, and topics (`trading-bot`, `lead-lag`, `binance`, `mexc`, `metascalp`, `paper-trading`, `python`).
+- Ran `gh auth setup-git`; main repo HTTPS git access works.
+- Retried `AlphaFlip.wiki.git` after confirming `hasWikiEnabled=true`; GitHub still returns `Repository not found`, so a first wiki page likely needs to be created through the GitHub web UI before the wiki git repository exists.
 
 ## 2026-05-13 Repository Publication Setup
 

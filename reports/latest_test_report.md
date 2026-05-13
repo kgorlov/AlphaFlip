@@ -34,6 +34,10 @@ Publication:
 - Pushed README and wiki source pages to `origin/master`.
 - Attempted to clone `https://github.com/kgorlov/AlphaFlip.wiki.git`; GitHub returned `Repository not found`.
 - `gh` is not installed locally, so wiki enablement could not be automated from this environment.
+- Installed GitHub CLI `gh` 2.92.0 under the user profile and authenticated as `kgorlov`.
+- Configured repository description, homepage URL, Issues, Projects, Wiki, and topics through `gh repo edit`.
+- Ran `gh auth setup-git`; main repository HTTPS git access works.
+- Retried `AlphaFlip.wiki.git` clone after confirming `hasWikiEnabled=true`; GitHub still returned `Repository not found`, so the separate wiki git repository has not been created by GitHub yet.
 
 ## 2026-05-13 Repository Publication Setup
 

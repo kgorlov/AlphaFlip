@@ -39,6 +39,10 @@ Completed on 2026-05-13.
 - `git push`: passed; README and `docs/wiki/` source are on `origin/master`.
 - GitHub Wiki push: blocked because `https://github.com/kgorlov/AlphaFlip.wiki.git` returned `Repository not found`.
 - GitHub CLI wiki enable attempt: blocked because `gh` is not installed in this environment.
+- GitHub CLI installed and authenticated as `kgorlov`.
+- Repository settings configured with description, homepage, issues enabled, projects enabled, wiki enabled, and repository topics.
+- `gh auth setup-git`: passed; main repository git HTTPS access works.
+- GitHub Wiki retry after `--enable-wiki=true`: still blocked because `https://github.com/kgorlov/AlphaFlip.wiki.git` returns `Repository not found`.
 
 ## Non-Goals
 

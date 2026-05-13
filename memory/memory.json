@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "updated_at_utc": "2026-05-13T17:27:00Z",
+  "updated_at_utc": "2026-05-13T17:39:00Z",
   "strategy_instance_id": "binance_mexc_leadlag_v1",
   "account_namespace": {
     "binance_uid": "unknown",
@@ -37,9 +37,9 @@
   "open_orders": [],
   "recent_errors": [],
   "codex_progress": {
-    "current_goal": "Continue remaining backend tasks while keeping documentation current",
-    "last_completed_milestone": "Published README and docs/wiki source pages to the main repository; GitHub Wiki repo is not currently available",
-    "next_required_step": "Enable GitHub Wiki in repository settings if a separate wiki is desired, then copy docs/wiki pages into AlphaFlip.wiki.git; otherwise continue backend tasks",
+    "current_goal": "Continue remaining backend tasks while keeping repository settings and documentation current",
+    "last_completed_milestone": "Installed/authenticated GitHub CLI and configured AlphaFlip repository settings; separate GitHub Wiki git repo is still unavailable",
+    "next_required_step": "Create the first GitHub Wiki page in the web UI if a separate wiki git repository is required, then push docs/wiki pages into AlphaFlip.wiki.git; otherwise continue backend tasks",
     "do_not_repeat": [
       "Do not store secrets in repo files",
       "Do not put LLMs in live signal or execution paths",
