@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "updated_at_utc": "2026-05-13T14:04:14Z",
+  "strategy_instance_id": "binance_mexc_leadlag_v1",
+  "account_namespace": {
+    "binance_uid": "unknown",
+    "mexc_uid": "unknown",
+    "mode": "shadow"
+  },
+  "secret_refs": {
+    "binance_api_key": "env:BINANCE_API_KEY",
+    "binance_api_secret": "env:BINANCE_API_SECRET",
+    "mexc_api_key": "env:MEXC_API_KEY",
+    "mexc_api_secret": "env:MEXC_API_SECRET"
+  },
+  "assumptions": {
+    "quote_asset": "USDT",
+    "live_trading_enabled": false,
+    "llm_in_live_path": false,
+    "execution_v1": "metascalp",
+    "default_profile": "perp_to_perp",
+    "mexc_test_environment": "not_available"
+  },
+  "runtime": {
+    "last_execplan": "reports/current_execplan.md",
+    "last_test_report": "reports/latest_test_report.md",
+    "python": ".venv/Scripts/python.exe"
+  },
+  "health": {
+    "binance_market_data": "healthy in bounded public dry-run",
+    "mexc_market_data": "healthy in bounded public dry-run",
+    "metascalp": "healthy at http://127.0.0.1:17845 demo connection 4",
+    "risk_state": "green"
+  },
+  "symbol_state": {},
+  "positions": [],
+  "open_orders": [],
+  "recent_errors": [],
+  "codex_progress": {
+    "current_goal": "Prepare a real guarded MetaScalp demo order attempt from live public signal flow",
+    "last_completed_milestone": "Added safe component health checks and CLI for data feeds, MetaScalp demo connectivity, DuckDB storage, and risk state",
+    "next_required_step": "Before any demo POST, run apps/health_check.py against the latest runner summary with --discover-metascalp --select-demo-mexc, then only after explicit user confirmation of parameters and exact phrase METASCALP_DEMO_ORDER run one guarded demo order and capture/reconcile private MetaScalp updates",
+    "do_not_repeat": [
+      "Do not store secrets in repo files",
+      "Do not put LLMs in live signal or execution paths",
+      "Do not trust Binance as leader without dynamic validation",
+      "Do not execute orders from market-data collectors"
+    ]
+  },
+  "retention": {
+    "max_recent_errors": 100,
+    "max_symbol_entries": 500,
+    "prune_stale_symbol_after_days": 14
+  }
+}

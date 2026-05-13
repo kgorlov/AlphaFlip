@@ -1,0 +1,1 @@
+{"capture":{"ws_url":"ws://127.0.0.1:17845/","out":"reports\\metascalp_private_real_probe.jsonl","captured":1,"subscriptions_sent":1,"opened_websocket":true,"safety":{"submits_orders":false,"cancels_orders":false,"reads_secrets":false}},"reconciliation":null,"storage":null}

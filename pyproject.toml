@@ -1,0 +1,37 @@
+[project]
+name = "leadlag-bot"
+version = "0.1.0"
+description = "Hybrid Binance to MEXC lead-lag paper/live-ready trading engine."
+requires-python = ">=3.12"
+dependencies = [
+  "aiohttp>=3.9",
+  "duckdb>=1.0",
+  "protobuf>=5.0",
+  "pyarrow>=15.0",
+  "pydantic>=2.7",
+  "pyyaml>=6.0",
+  "websockets>=12.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-asyncio>=0.23",
+  "ruff>=0.6",
+]
+
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["llbot*"]
+exclude = ["apps*", "conf*", "data*", "logs*", "memory*", "references*", "reports*", "tests*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

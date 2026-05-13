@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Local config and secrets
+.env
+*.env
+*.pem
+*.key
+secrets/
+local/
+
+# Runtime data
+data/
+logs/*.jsonl
+*.duckdb
+*.duckdb.wal
+*.parquet
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,357 @@
+"""DuckDB storage for local execution and reconciliation state."""
+
+import json
+from decimal import Decimal
+from pathlib import Path
+from typing import Any
+
+from llbot.storage.audit_jsonl import audit_record_to_dict
+
+
+class DuckDbExecutionStore:
+    """Persist reconciled MetaScalp execution state into queryable DuckDB tables."""
+
+    def __init__(self, path: str | Path) -> None:
+        self.path = Path(path)
+        self._conn = None
+
+    def __enter__(self) -> "DuckDbExecutionStore":
+        self.open()
+        return self
+
+    def __exit__(self, exc_type, exc, traceback) -> None:
+        self.close()
+
+    def open(self) -> None:
+        if self._conn is not None:
+            return
+        import duckdb
+
+        if self.path != Path(":memory:"):
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._conn = duckdb.connect(str(self.path))
+        self.init_schema()
+
+    def close(self) -> None:
+        if self._conn is not None:
+            self._conn.close()
+            self._conn = None
+
+    def init_schema(self) -> None:
+        conn = self._require_conn()
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS metascalp_orders (
+                client_order_id TEXT PRIMARY KEY,
+                intent_id TEXT NOT NULL,
+                venue_order_id TEXT,
+                symbol TEXT NOT NULL,
+                qty DECIMAL(38, 18) NOT NULL,
+                filled_qty DECIMAL(38, 18) NOT NULL,
+                avg_fill_price DECIMAL(38, 18),
+                status TEXT NOT NULL,
+                is_open BOOLEAN NOT NULL,
+                accepted_ts_ms BIGINT,
+                expires_ts_ms BIGINT,
+                last_update_ts_ms BIGINT,
+                unknown_status BOOLEAN NOT NULL,
+                connection_id BIGINT,
+                metadata_json TEXT NOT NULL,
+                raw_json TEXT NOT NULL,
+                source TEXT,
+                ingested_at TIMESTAMP DEFAULT current_timestamp
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS metascalp_fills (
+                client_order_id TEXT PRIMARY KEY,
+                intent_id TEXT NOT NULL,
+                venue_order_id TEXT,
+                symbol TEXT NOT NULL,
+                filled_qty DECIMAL(38, 18) NOT NULL,
+                avg_fill_price DECIMAL(38, 18) NOT NULL,
+                fill_ts_ms BIGINT,
+                status TEXT NOT NULL,
+                source TEXT,
+                raw_json TEXT NOT NULL,
+                ingested_at TIMESTAMP DEFAULT current_timestamp
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS metascalp_positions (
+                source TEXT,
+                row_no BIGINT NOT NULL,
+                connection_id BIGINT,
+                symbol TEXT NOT NULL,
+                qty DECIMAL(38, 18) NOT NULL,
+                avg_price DECIMAL(38, 18),
+                raw_json TEXT NOT NULL,
+                ingested_at TIMESTAMP DEFAULT current_timestamp
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS metascalp_balances (
+                source TEXT,
+                row_no BIGINT NOT NULL,
+                connection_id BIGINT,
+                asset TEXT NOT NULL,
+                available DECIMAL(38, 18),
+                total DECIMAL(38, 18),
+                raw_json TEXT NOT NULL,
+                ingested_at TIMESTAMP DEFAULT current_timestamp
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS metascalp_reconciliation_audit (
+                source TEXT,
+                row_no BIGINT NOT NULL,
+                event_type TEXT NOT NULL,
+                decision_result TEXT NOT NULL,
+                client_order_id TEXT,
+                before_status TEXT,
+                after_status TEXT,
+                symbol TEXT,
+                raw_update_json TEXT NOT NULL,
+                metadata_json TEXT NOT NULL,
+                ingested_at TIMESTAMP DEFAULT current_timestamp
+            )
+            """
+        )
+
+    def ingest_reconciliation_report(
+        self,
+        report: dict[str, Any],
+        *,
+        source: str | None = None,
+        replace_source: bool = True,
+    ) -> dict[str, int]:
+        """Insert a reconciliation report produced by apps/reconcile_metascalp_updates.py."""
+
+        conn = self._require_conn()
+        orders = _list(report.get("orders"))
+        positions = _list(report.get("positions"))
+        balances = _list(report.get("balances"))
+        audit_records = _list(report.get("audit_records"))
+
+        if source is not None and replace_source:
+            self.delete_source(source)
+
+        inserted_orders = 0
+        inserted_fills = 0
+        for order in orders:
+            client_order_id = str(order["client_order_id"])
+            conn.execute("DELETE FROM metascalp_orders WHERE client_order_id = ?", [client_order_id])
+            conn.execute("DELETE FROM metascalp_fills WHERE client_order_id = ?", [client_order_id])
+            conn.execute(
+                """
+                INSERT INTO metascalp_orders (
+                    client_order_id, intent_id, venue_order_id, symbol, qty, filled_qty,
+                    avg_fill_price, status, is_open, accepted_ts_ms, expires_ts_ms,
+                    last_update_ts_ms, unknown_status, connection_id, metadata_json,
+                    raw_json, source
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    client_order_id,
+                    str(order["intent_id"]),
+                    _str_or_none(order.get("venue_order_id")),
+                    str(order["symbol"]),
+                    _decimal(order.get("qty"), "0"),
+                    _decimal(order.get("filled_qty"), "0"),
+                    _decimal_or_none(order.get("avg_fill_price")),
+                    str(order["status"]),
+                    bool(order.get("open", False)),
+                    _int_or_none(order.get("accepted_ts_ms")),
+                    _int_or_none(order.get("expires_ts_ms")),
+                    _int_or_none(order.get("last_update_ts_ms")),
+                    bool(order.get("unknown_status", False)),
+                    _int_or_none(_metadata(order).get("connection_id")),
+                    _json(_metadata(order)),
+                    _json(order),
+                    source,
+                ],
+            )
+            inserted_orders += 1
+            if _decimal(order.get("filled_qty"), "0") > 0 and order.get("avg_fill_price") is not None:
+                conn.execute(
+                    """
+                    INSERT INTO metascalp_fills (
+                        client_order_id, intent_id, venue_order_id, symbol, filled_qty,
+                        avg_fill_price, fill_ts_ms, status, source, raw_json
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    [
+                        client_order_id,
+                        str(order["intent_id"]),
+                        _str_or_none(order.get("venue_order_id")),
+                        str(order["symbol"]),
+                        _decimal(order.get("filled_qty"), "0"),
+                        _decimal(order.get("avg_fill_price"), "0"),
+                        _int_or_none(order.get("last_update_ts_ms")),
+                        str(order["status"]),
+                        source,
+                        _json(order),
+                    ],
+                )
+                inserted_fills += 1
+
+        for row_no, position in enumerate(positions):
+            conn.execute(
+                """
+                INSERT INTO metascalp_positions (
+                    source, row_no, connection_id, symbol, qty, avg_price, raw_json
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    source,
+                    row_no,
+                    _int_or_none(position.get("connection_id")),
+                    str(position["symbol"]),
+                    _decimal(position.get("qty"), "0"),
+                    _decimal_or_none(position.get("avg_price")),
+                    _json(position),
+                ],
+            )
+
+        for row_no, balance in enumerate(balances):
+            conn.execute(
+                """
+                INSERT INTO metascalp_balances (
+                    source, row_no, connection_id, asset, available, total, raw_json
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    source,
+                    row_no,
+                    _int_or_none(balance.get("connection_id")),
+                    str(balance["asset"]),
+                    _decimal_or_none(balance.get("available")),
+                    _decimal_or_none(balance.get("total")),
+                    _json(balance),
+                ],
+            )
+
+        for row_no, record in enumerate(audit_records):
+            conn.execute(
+                """
+                INSERT INTO metascalp_reconciliation_audit (
+                    source, row_no, event_type, decision_result, client_order_id,
+                    before_status, after_status, symbol, raw_update_json, metadata_json
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    source,
+                    row_no,
+                    str(record["event_type"]),
+                    str(record["decision_result"]),
+                    _str_or_none(record.get("client_order_id")),
+                    _str_or_none(record.get("before_status")),
+                    _str_or_none(record.get("after_status")),
+                    _str_or_none(record.get("symbol")),
+                    _json(record.get("raw_update", {})),
+                    _json(record.get("metadata", {})),
+                ],
+            )
+
+        return {
+            "orders": inserted_orders,
+            "fills": inserted_fills,
+            "positions": len(positions),
+            "balances": len(balances),
+            "audit_records": len(audit_records),
+        }
+
+    def delete_source(self, source: str) -> None:
+        conn = self._require_conn()
+        for table in (
+            "metascalp_orders",
+            "metascalp_fills",
+            "metascalp_positions",
+            "metascalp_balances",
+            "metascalp_reconciliation_audit",
+        ):
+            conn.execute(f"DELETE FROM {table} WHERE source = ?", [source])
+
+    def table_counts(self) -> dict[str, int]:
+        conn = self._require_conn()
+        tables = {
+            "orders": "metascalp_orders",
+            "fills": "metascalp_fills",
+            "positions": "metascalp_positions",
+            "balances": "metascalp_balances",
+            "audit_records": "metascalp_reconciliation_audit",
+        }
+        return {
+            name: int(conn.execute(f"SELECT count(*) FROM {table}").fetchone()[0])
+            for name, table in tables.items()
+        }
+
+    def query_all(self, sql: str, parameters: list[Any] | None = None) -> list[tuple[Any, ...]]:
+        return self._require_conn().execute(sql, parameters or []).fetchall()
+
+    def _require_conn(self):
+        if self._conn is None:
+            raise RuntimeError("DuckDbExecutionStore is not open")
+        return self._conn
+
+
+def load_reconciliation_report(path: str | Path) -> dict[str, Any]:
+    payload = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+    if not isinstance(payload, dict):
+        raise ValueError("Reconciliation report must be a JSON object")
+    return payload
+
+
+def _list(value: Any) -> list[dict[str, Any]]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise ValueError("Expected report section to be a list")
+    if not all(isinstance(item, dict) for item in value):
+        raise ValueError("Expected report rows to be JSON objects")
+    return value
+
+
+def _metadata(order: dict[str, Any]) -> dict[str, Any]:
+    metadata = order.get("metadata", {})
+    return metadata if isinstance(metadata, dict) else {}
+
+
+def _json(value: Any) -> str:
+    return json.dumps(audit_record_to_dict(value), ensure_ascii=True, separators=(",", ":"))
+
+
+def _decimal(value: Any, default: str) -> Decimal:
+    parsed = _decimal_or_none(value)
+    return Decimal(default) if parsed is None else parsed
+
+
+def _decimal_or_none(value: Any) -> Decimal | None:
+    if value is None or value == "":
+        return None
+    return Decimal(str(value))
+
+
+def _int_or_none(value: Any) -> int | None:
+    if value is None or value == "":
+        return None
+    return int(value)
+
+
+def _str_or_none(value: Any) -> str | None:
+    if value is None or value == "":
+        return None
+    return str(value)

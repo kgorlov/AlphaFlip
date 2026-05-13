@@ -1,0 +1,3 @@
+﻿{"Type":"OrderUpdate","Data":{"ClientId":"llb-smoke-demo-order","OrderId":"ord-1","Status":"Filled","FilledQty":"2","AvgFillPrice":"100.1","Timestamp":100}}
+{"Type":"PositionUpdate","Data":{"ConnectionId":11,"Symbol":"BTC_USDT","Qty":"0"}}
+{"Type":"BalanceUpdate","Data":{"ConnectionId":11,"Asset":"USDT","Available":"100","Total":"100"}}

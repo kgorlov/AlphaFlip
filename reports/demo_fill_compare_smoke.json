@@ -1,0 +1,1 @@
+{"summary":{"matched":1,"unmatched_paper":0,"unmatched_demo":0,"qty_mismatches":0,"price_mismatches":1},"comparisons":[{"client_order_id":"llb-smoke-demo-order","intent_id":"smoke-demo-order","symbol":"BTC_USDT","paper_qty":"2","demo_qty":"2","qty_diff":"0","paper_price":"100","demo_price":"100.1","price_diff":"0.1","status":"matched"}],"unmatched_paper":[],"unmatched_demo":[]}

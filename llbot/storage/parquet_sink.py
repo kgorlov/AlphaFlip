@@ -1,0 +1,2 @@
+"""Parquet event sink placeholder."""
+
