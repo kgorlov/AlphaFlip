@@ -92,16 +92,12 @@ def build_metascalp_dry_run_order_plan(
     client_id = _client_id(intent)
     endpoint = f"/api/connections/{connection.id}/orders"
     payload = {
-        "Symbol": execution_symbol,
-        "Side": _metascalp_side(intent.side),
-        "OrderType": _metascalp_order_type(intent.order_style),
-        "Price": str(intent.price_cap),
-        "Volume": str(intent.qty),
-        "ClientId": client_id,
-        "TimeInForce": "GTC",
-        "TtlMs": intent.ttl_ms,
-        "ReduceOnly": _reduce_only_supported(intent, profile),
-        "Comment": f"leadlag:{intent.intent_id}",
+        "ticker": execution_symbol,
+        "side": _metascalp_side(intent.side),
+        "price": str(intent.price_cap),
+        "size": str(intent.qty),
+        "clientId": client_id,
+        "comment": f"leadlag:{intent.intent_id}",
     }
     return MetaScalpDryRunOrderPlan(
         intent_id=intent.intent_id,
@@ -146,7 +142,7 @@ def dry_run_order_audit_record(
         unknown_status=False,
         metadata={
             "validation_reason": plan.validation.reason,
-            "reduce_only": bool(plan.payload.get("ReduceOnly")),
+            "reduce_only": bool(plan.payload.get("reduceOnly")),
             "order_style": intent.order_style.value,
         },
     )
@@ -201,7 +197,7 @@ def _client_id(intent: Intent) -> str:
 
 
 def _metascalp_side(side: Side) -> str:
-    return "Buy" if side == Side.BUY else "Sell"
+    return "buy" if side == Side.BUY else "sell"
 
 
 def _metascalp_order_type(order_style: OrderStyle) -> str:

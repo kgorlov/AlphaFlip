@@ -20,8 +20,8 @@ class MetaScalpDemoOrderCliTests(IsolatedAsyncioTestCase):
         self.assertEqual(result["metascalp_base_url"], "http://127.0.0.1:17845")
         self.assertEqual(result["metascalp_health"]["connection_id"], 11)
         self.assertTrue(result["metascalp_health"]["demo_mode"])
-        self.assertEqual(result["request"]["Price"], "100.1")
-        self.assertEqual(result["request"]["ClientId"], "llb-cli-intent")
+        self.assertEqual(result["request"]["price"], "100.1")
+        self.assertEqual(result["request"]["clientId"], "llb-cli-intent")
 
     async def test_submit_demo_requires_discovery_to_verify_connection(self) -> None:
         with self.assertRaises(SystemExit) as raised:
@@ -115,7 +115,7 @@ class _FakeHttp:
 
     async def post_json(self, path, payload=None):
         self.post_calls.append((path, payload))
-        return {"Data": {"ClientId": payload["ClientId"], "ExecutionTimeMs": 9}}
+        return {"Data": {"ClientId": payload["clientId"], "ExecutionTimeMs": 9}}
 
 
 class _FakeHttpNonDemo(_FakeHttp):

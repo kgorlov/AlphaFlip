@@ -2560,3 +2560,53 @@ Coverage added:
 - Spot and perp rotation tests validate direct Binance/MEXC market-data subscription planning.
 - MetaScalp execution remains guarded by planner tests; no submit/cancel/live path was enabled.
 - Research policy tests keep `trade/skip` classifiers and neural-network training blocked until clean data, baseline proof, and explicit approval gates are satisfied.
+
+## 2026-05-14 MetaScalp Demo Manual Submit Smoke
+
+MetaScalp discovery:
+
+```text
+.\.venv\Scripts\python.exe apps\probe_metascalp.py
+```
+
+Result: found MetaScalp at `http://127.0.0.1:17845`; connected MEXC Futures `DemoMode=true` connection id `4`.
+
+Bounded runner submit attempt:
+
+```text
+.\.venv\Scripts\python.exe apps\runner_metascalp_demo.py --events 5000 --min-events-per-stream 1 --max-events 50000 --connection-id 4 --max-demo-orders 1 --submit-demo --confirm-demo-submit METASCALP_DEMO_ORDER --min-samples 1 --stale-feed-ms 1500 --summary-out reports\metascalp_demo_runner_manual_submit_summary.json --paper-audit-out reports\metascalp_demo_runner_manual_submit_paper.jsonl --metascalp-audit-out reports\metascalp_demo_runner_manual_submit_orders.jsonl
+```
+
+Result: public feeds processed 5000 quotes, created 5 signal intents, and submitted no orders because all signals were risk-blocked (`max_total_notional_reached` or `mexc_feed_stale`).
+
+Manual guarded demo submit:
+
+```text
+.\.venv\Scripts\python.exe apps\metascalp_demo_order.py --discover --submit-demo --confirm-demo-submit METASCALP_DEMO_ORDER --symbol BTCUSDT --execution-symbol BTC_USDT --side buy --qty 0.001 --price-cap 81280 --min-qty 0.001 --qty-step 0.001 --price-tick 0.1 --min-notional-usd 5 --contract-size 1 --expected-edge-bps 1 --intent-id manual-demo-view-003 --out reports\metascalp_demo_order_manual_submit_tiny.json
+```
+
+Result: accepted by MetaScalp DemoMode; returned `status=ok`, `clientId=a6757b56-8d73-49dc-824f-d499900b`, `executionTimeMs=464.6353`.
+
+Validation:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_metascalp_execution tests.test_metascalp_demo_order_cli tests.test_metascalp_demo_runner
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result:
+
+```text
+Ran 33 tests in 0.053s
+OK
+
+Ran 202 tests in 1.075s
+OK
+```
+
+Coverage added:
+
+- MetaScalp order payload now matches the observed local API schema: `ticker`, `side`, `price`, `size`, `clientId`, and `comment`.
+- Demo submission remains guarded by `--submit-demo --confirm-demo-submit METASCALP_DEMO_ORDER` and connected `DemoMode=true` discovery.
+- Live trading remains disabled.

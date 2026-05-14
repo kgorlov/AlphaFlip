@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "updated_at_utc": "2026-05-14T19:20:00Z",
+  "updated_at_utc": "2026-05-14T19:31:00Z",
   "strategy_instance_id": "binance_mexc_leadlag_v1",
   "account_namespace": {
     "binance_uid": "unknown",
@@ -38,8 +38,8 @@
   "recent_errors": [],
   "codex_progress": {
     "current_goal": "Keep backend profile support guarded and prepare only data-backed research next steps",
-    "last_completed_milestone": "Finalized explicit spot/perp profile support and ML research guardrails",
-    "next_required_step": "Use only offline reports and clean saved data for any future research experiments; keep live execution disabled by default",
+    "last_completed_milestone": "Ran MetaScalp DemoMode manual submit smoke and aligned order payload schema",
+    "next_required_step": "Inspect MetaScalp demo order/fill state for clientId a6757b56-8d73-49dc-824f-d499900b; keep live execution disabled by default",
     "do_not_repeat": [
       "Do not store secrets in repo files",
       "Do not put LLMs in live signal or execution paths",

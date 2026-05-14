@@ -432,3 +432,13 @@
 - Added a research policy gate: simple `trade/skip` classifiers require clean tick/orderbook data, enough samples, and a proven rule-based baseline; neural-network training also requires explicit approval.
 - Decision: profile support is still planning/market-data/execution-planner guarded; research ML remains offline-gated; this does not submit or cancel MetaScalp orders, read secrets, or enable live trading.
 - Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 202 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 MetaScalp Demo Manual Submit Smoke
+
+- `apps\probe_metascalp.py` found MetaScalp at `http://127.0.0.1:17845` with MEXC Futures DemoMode connection id `4`.
+- A bounded `runner_metascalp_demo.py` submit-enabled run processed public Binance/MEXC quotes and created signal intents, but submitted no orders because risk gates blocked every candidate (`max_total_notional_reached` or `mexc_feed_stale`).
+- First manual guarded demo submit reached MetaScalp but showed the local API requires lowercase order fields: `ticker`, `side`, `price`, and `size`.
+- Updated MetaScalp order payload building to use the observed local API schema while retaining `clientId` and `comment` for traceability.
+- Manual guarded demo submit with `qty=0.001` was accepted by MetaScalp DemoMode, returning `status=ok`, `clientId=a6757b56-8d73-49dc-824f-d499900b`, and `executionTimeMs=464.6353`.
+- Decision: this was DemoMode only, behind explicit submit confirmation and connected demo discovery; live trading remains disabled.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 202 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.

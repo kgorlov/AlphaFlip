@@ -127,7 +127,7 @@ class MetaScalpDemoSubmitTests(IsolatedAsyncioTestCase):
         self.assertEqual(len(audits), 1)
         self.assertTrue(audits[0].dry_run)
         self.assertEqual(audits[0].decision_result, "dry_run_planned")
-        self.assertEqual(audits[0].request["Symbol"], "BTC_USDT")
+        self.assertEqual(audits[0].request["ticker"], "BTC_USDT")
 
 
 def _record(decision_result: str = "filled", intent_type: str = IntentType.ENTER_LONG.value) -> ReplayAuditRecord:

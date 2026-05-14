@@ -50,14 +50,12 @@ class MetaScalpExecutionPlannerTests(TestCase):
         self.assertTrue(plan.dry_run)
         self.assertEqual(plan.connection_id, 11)
         self.assertEqual(plan.endpoint, "/api/connections/11/orders")
-        self.assertEqual(plan.payload["Symbol"], "BTC_USDT")
-        self.assertEqual(plan.payload["Side"], "Buy")
-        self.assertEqual(plan.payload["OrderType"], "Limit")
-        self.assertEqual(plan.payload["Price"], "100.1")
-        self.assertEqual(plan.payload["Volume"], "2")
-        self.assertEqual(plan.payload["ClientId"], "llb-intent-test-1")
-        self.assertEqual(plan.payload["Comment"], "leadlag:intent-test-1")
-        self.assertFalse(plan.payload["ReduceOnly"])
+        self.assertEqual(plan.payload["ticker"], "BTC_USDT")
+        self.assertEqual(plan.payload["side"], "buy")
+        self.assertEqual(plan.payload["price"], "100.1")
+        self.assertEqual(plan.payload["size"], "2")
+        self.assertEqual(plan.payload["clientId"], "llb-intent-test-1")
+        self.assertEqual(plan.payload["comment"], "leadlag:intent-test-1")
 
         self.assertEqual(audit.event_type, "metascalp_order_dry_run")
         self.assertEqual(audit.decision_result, "dry_run_planned")
@@ -74,14 +72,14 @@ class MetaScalpExecutionPlannerTests(TestCase):
 
         plan = build_metascalp_dry_run_order_plan(intent, _connection(), "BTC_USDT")
 
-        self.assertEqual(plan.payload["Side"], "Sell")
-        self.assertTrue(plan.payload["ReduceOnly"])
+        self.assertEqual(plan.payload["side"], "sell")
+        self.assertNotIn("reduceOnly", plan.payload)
 
     def test_spot_exit_does_not_set_reduce_only_when_unsupported(self) -> None:
         intent = _intent(intent_type=IntentType.EXIT_LONG, side=Side.SELL)
         plan = build_metascalp_dry_run_order_plan(intent, _connection(), "BTCUSDT", _spot_profile())
 
-        self.assertFalse(plan.payload["ReduceOnly"])
+        self.assertNotIn("reduceOnly", plan.payload)
 
     def test_explicit_reduce_only_support_metadata_overrides_market_type(self) -> None:
         intent = _intent(intent_type=IntentType.EXIT_LONG, side=Side.SELL)
@@ -89,7 +87,7 @@ class MetaScalpExecutionPlannerTests(TestCase):
 
         plan = build_metascalp_dry_run_order_plan(intent, _connection(), "BTCUSDT", profile)
 
-        self.assertTrue(plan.payload["ReduceOnly"])
+        self.assertNotIn("reduceOnly", plan.payload)
 
     def test_order_style_selection_requires_edge_thresholds(self) -> None:
         passive = select_order_style_for_edge(
@@ -241,7 +239,7 @@ class MetaScalpDemoExecutorTests(IsolatedAsyncioTestCase):
         audit = await executor.submit(_intent(), _connection(), "BTC_USDT", _profile())
 
         self.assertEqual(http.post_calls[0][0], "/api/connections/11/orders")
-        self.assertEqual(http.post_calls[0][1]["ClientId"], "llb-intent-test-1")
+        self.assertEqual(http.post_calls[0][1]["clientId"], "llb-intent-test-1")
         self.assertEqual(audit.decision_result, "accepted")
         self.assertFalse(audit.dry_run)
         self.assertEqual(audit.client_id_returned, "llb-intent-test-1")
