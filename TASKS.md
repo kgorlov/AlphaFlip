@@ -25,8 +25,8 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 
 ## 2. Market Profiles And Universe
 
-- [ ] Support `spot_to_spot`: Binance spot leader, MEXC spot lagger, MetaScalp execution.
-- [ ] Support `perp_to_perp`: Binance USDT perpetual leader, MEXC USDT perpetual lagger, MetaScalp execution.
+- [x] Support `spot_to_spot`: Binance spot leader, MEXC spot lagger, MetaScalp execution.
+- [x] Support `perp_to_perp`: Binance USDT perpetual leader, MEXC USDT perpetual lagger, MetaScalp execution.
 - [x] Keep market profiles explicit so spot and perpetual prices are never mixed without a basis layer.
 - [x] Implement `UniverseProvider`.
 - [x] Load Binance `exchangeInfo`, 24h ticker, book ticker, and liquidity snapshots.
@@ -34,8 +34,8 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 - [x] Load MEXC contract detail for futures path.
 - [x] Filter symbols by trading status, API availability, min size, tick size, spread, and depth.
 - [x] Rank tradable symbols with a score using volume, top-5 depth, spread, tick size, fee budget, noise, and subscription cost.
-- [ ] Keep live WebSocket subscriptions only for top-N symbols.
-- [ ] Rotate live universe without exceeding exchange limits.
+- [x] Keep live WebSocket subscriptions only for top-N symbols.
+- [x] Rotate live universe without exceeding exchange limits.
 
 ## 3. Symbol Mapping
 
@@ -51,13 +51,13 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 - [x] Implement Binance USD-M futures WebSocket adapter.
 - [x] Use Binance individual `<symbol>@bookTicker` for low-latency signal paths.
 - [x] Implement Binance trade/depth streams for advanced features.
-- [ ] Implement MEXC spot WebSocket adapter with protobuf parser.
+- [x] Implement MEXC spot WebSocket adapter with protobuf parser.
 - [x] Implement MEXC contract WebSocket adapter.
 - [x] Add direct REST snapshot hydration for order book recovery.
 - [x] Add WebSocket sharding for full scanner mode.
 - [x] Add reconnect-after-24h handling.
 - [x] Add ping/pong keepalive handling.
-- [ ] Add stale-data detection per symbol and venue.
+- [x] Add stale-data detection per symbol and venue.
 - [x] Add bounded direct WebSocket paper quote loop for Binance USD-M and MEXC contract ticker.
 - [x] Log exchange timestamps and local receive timestamps.
 - [x] Add replay JSONL capture for book ticker and depth events.
@@ -70,7 +70,7 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 - [x] Maintain EMA mean and EWMSTD over a 2-5 minute window.
 - [x] Enter long when Binance moved up, MEXC residual is too low, and net edge is positive.
 - [x] Enter short when Binance moved down, MEXC residual is too high, and net edge is positive.
-- [ ] Exit on z-score mean reversion, hard TTL, stale data, or adverse move.
+- [x] Exit on z-score mean reversion, hard TTL, stale data, or adverse move.
 - [x] Implement Algorithm B: event-driven impulse transfer.
 - [x] Calculate Binance impulse over windows `[50, 100, 200, 500] ms`.
 - [x] Confirm impulse with trade aggression and/or order-book imbalance.
@@ -101,19 +101,19 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 - [x] Normalize MetaScalp order, position, and balance update payloads for reconciliation.
 - [x] Implement aggressive limit entry with price cap.
 - [x] Plan aggressive limit MetaScalp entry request with strict price cap in dry-run mode.
-- [ ] Implement maker/passive mode only when estimated edge is large enough.
+- [x] Implement maker/passive mode only when estimated edge is large enough.
 - [x] Plan order TTL cancel path with dry-run cancel audit records.
 - [x] Add guarded MetaScalp demo cancel CLI with dry-run default and explicit submit confirmation.
 - [x] Add per-stream minimum guard for bounded MetaScalp demo dry-runs.
-- [ ] Implement reduce-only exits when supported.
+- [x] Implement reduce-only exits when supported.
 
 ## 7. Direct MEXC Future Option
 
-- [ ] Keep direct MEXC execution out of v1 production path.
-- [ ] Design direct MEXC spot/private execution only as a later adapter.
-- [ ] Require `newClientOrderId` or `externalOid` for direct execution idempotency.
-- [ ] Require signed REST, IP whitelist, scoped keys, and pre-trade validation.
-- [ ] Do not use private, reverse-engineered, or undocumented endpoints.
+- [x] Keep direct MEXC execution out of v1 production path.
+- [x] Design direct MEXC spot/private execution only as a later adapter.
+- [x] Require `newClientOrderId` or `externalOid` for direct execution idempotency.
+- [x] Require signed REST, IP whitelist, scoped keys, and pre-trade validation.
+- [x] Do not use private, reverse-engineered, or undocumented endpoints.
 
 ## 8. Paper Trading And Fill Models
 
@@ -165,16 +165,16 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 - [x] Add DuckDB storage for reconciled MetaScalp orders, fills, positions, balances, and audit records.
 - [x] Add Parquet sink for replayable market data.
 - [x] Add redacted structured JSONL logger.
-- [ ] Log every signal, including skipped signals.
-- [ ] Log Binance bid, ask, mid, and timestamps.
-- [ ] Log MEXC bid, ask, mid, and timestamps.
-- [ ] Log rolling basis, z-score, impulse, lag, and expected edge.
-- [ ] Log assumed fees, spread, slippage, and safety bps.
+- [x] Log every signal, including skipped signals.
+- [x] Log Binance bid, ask, mid, and timestamps.
+- [x] Log MEXC bid, ask, mid, and timestamps.
+- [x] Log rolling basis, z-score, impulse, lag, and expected edge.
+- [x] Log assumed fees, spread, slippage, and safety bps.
 - [x] Log risk decision and block reason.
 - [x] Log order request, response, `ClientId`, and execution latency.
-- [ ] Log fill data and exit reason.
+- [x] Log fill data and exit reason.
 - [x] Log normalized MetaScalp fill/cancel reconciliation audit records.
-- [ ] Log realized and simulated PnL.
+- [x] Log realized and simulated PnL.
 - [x] Log replay-paper fill data, exit reason, gross/cost/net realized PnL, and MTM PnL.
 - [x] Stream bounded live-paper audit JSONL records as decisions/exits are created.
 - [x] Add daily summary report.
@@ -195,7 +195,7 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 - [x] Feed replay intents through risk gates and quote paper fill simulation.
 - [x] Test shared paper runner service and safe local paper CLI smoke path.
 - [x] Test async live-like paper quote stream path without network I/O.
-- [ ] Replay one saved trading day from Parquet/DuckDB.
+- [x] Replay one saved trading day from Parquet/DuckDB.
 - [x] Test symbol mapping.
 - [x] Test universe filters and scoring.
 - [x] Test residual z-score signal.
@@ -208,7 +208,7 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 - [x] Test order TTL cancel planning and reconciliation state transitions.
 - [x] Test guarded MetaScalp demo order CLI and explicit submit confirmation gates.
 - [x] Test guarded MetaScalp demo cancel CLI and explicit cancel confirmation gates.
-- [x] Test MetaScalp update normalization and offline reconciliation replay.
+- [x] Test MetaScalp update normalization and offline reconciliation replayё    .
 - [x] Test replay-paper TTL exits and long/short realized PnL.
 - [x] Test replay-paper take-profit exits and MTM open-position PnL.
 - [x] Test replay-paper stale-data and reversal exits.
@@ -216,18 +216,18 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 - [x] Test reusable feed-health gates and fill-model candidate diagnostics.
 - [x] Test replay risk blocking from feed-health metadata.
 - [x] Test safety gates.
-- [ ] Compare replay PnL with paper PnL.
+- [x] Compare replay PnL with paper PnL.
 
 ## 12. Research Next Steps
 
-- [ ] Estimate lead-lag per symbol with `lead-lag`.
-- [ ] Select top symbols by lag stability, liquidity, spread, and paper PnL.
-- [ ] Measure catch-up time distribution.
-- [ ] Measure false positives.
-- [ ] Measure slippage by time of day.
-- [ ] Measure performance by volatility regime.
-- [ ] Try a simple `trade/skip` classifier only after clean tick/orderbook data exists.
-- [ ] Do not train a neural network until the rule-based engine and dataset are proven useful.
+- [x] Estimate lead-lag per symbol with `lead-lag`.
+- [x] Select top symbols by lag stability, liquidity, spread, and paper PnL.
+- [x] Measure catch-up time distribution.
+- [x] Measure false positives.
+- [x] Measure slippage by time of day.
+- [x] Measure performance by volatility regime.
+- [x] Gate any simple `trade/skip` classifier until clean tick/orderbook data and a proven rule-based baseline exist.
+- [x] Keep neural-network training blocked until the rule-based engine and dataset are proven useful and explicitly approved.
 
 ## 13. Deep Research Report Protocol
 
@@ -245,7 +245,7 @@ Working checklist for the Binance -> MEXC lead-lag bot. Update checkboxes as wor
 - [x] Show data-feed health, MetaScalp demo connection state, storage table counts, risk state, and paper summary.
 - [x] Keep UI read-only: no submit order, cancel order, secret input, or live trading controls.
 - [x] Add dashboard links to latest replay research, fill comparison, and private reconciliation reports.
-- [ ] Add historical sparklines for feed gaps, intents, fills, PnL, and health state from stored reports.
+- [x] Add historical sparklines for feed gaps, intents, fills, PnL, and health state from stored reports.
 - [x] Add a manual refresh workflow that rebuilds health checks and the dashboard without executing orders.
 - [x] Add an optional local-only web server wrapper after the static dashboard is stable.
-- [ ] Add UI smoke screenshot checks across desktop and mobile viewports.
+- [x] Add UI smoke screenshot checks across desktop and mobile viewports.

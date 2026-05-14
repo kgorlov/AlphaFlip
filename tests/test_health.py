@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 from apps.health_check import run as run_health_check
 from llbot.adapters.metascalp import MetaScalpConnection, MetaScalpInstance
-from llbot.domain.enums import MarketType, Venue
+from llbot.domain.enums import MarketProfileName, MarketType, Venue
 from llbot.domain.models import PortfolioState, Quote
 from llbot.monitoring.alerts import (
     alerts_to_risk_metadata,
@@ -21,17 +21,20 @@ from llbot.monitoring.health import (
     FeedHealthDecision,
     build_system_health,
     evaluate_feed_health,
+    evaluate_profile_feed_health,
     feed_component_health,
     feed_health_metadata,
     feed_stream_key,
     feed_stream_state_to_dict,
     metascalp_component_health,
+    required_profile_streams,
     risk_component_health,
     storage_component_health,
     system_health_to_dict,
     update_feed_stream_state,
 )
 from llbot.storage.duckdb_store import DuckDbExecutionStore
+from llbot.universe.symbol_mapper import SymbolMapper
 
 
 class FeedHealthTests(TestCase):
@@ -103,6 +106,21 @@ class FeedHealthTests(TestCase):
         self.assertEqual(metadata["feed_health_reason"], "stale_stream")
         self.assertEqual(metadata["feed_health_stale_streams"], ["binance:BTCUSDT"])
         self.assertEqual(metadata["feed_health_missing_streams"], ["mexc:BTC_USDT"])
+
+    def test_evaluate_profile_feed_health_uses_symbol_venue_pair(self) -> None:
+        profile = SymbolMapper(MarketProfileName.PERP_TO_PERP).build_profile("BTCUSDT")
+        streams = {
+            "binance:BTCUSDT": update_feed_stream_state(None, "binance", "BTCUSDT", 100),
+            "mexc:BTC_USDT": update_feed_stream_state(None, "mexc", "BTC_USDT", 800),
+        }
+
+        self.assertEqual(required_profile_streams(profile), ("binance:BTCUSDT", "mexc:BTC_USDT"))
+        stale = evaluate_profile_feed_health(streams, profile, now_ts_ms=900, stale_after_ms=500)
+        healthy = evaluate_profile_feed_health(streams, profile, now_ts_ms=900, stale_after_ms=900)
+
+        self.assertEqual(stale.reason, "stale_stream")
+        self.assertEqual(stale.stale_streams, ("binance:BTCUSDT",))
+        self.assertTrue(healthy.healthy)
 
     def test_feed_latency_alert_maps_to_risk_metadata(self) -> None:
         alert = evaluate_quote_latency(_quote(exchange_ts_ms=1000, local_ts_ms=2601), 1500)

@@ -19,6 +19,8 @@ class ResidualZScoreConfig:
     qty: Decimal = Decimal("1")
     beta: Decimal = Decimal("1")
     z_entry: Decimal = Decimal("2.2")
+    z_exit: Decimal = Decimal("0.4")
+    adverse_z_stop: Decimal = Decimal("4")
     min_samples: int = 10
     window_samples: int = 120
     ewm_window_ms: int = 180_000
@@ -104,7 +106,14 @@ class ResidualZScoreSignal:
                     "basis_ewm_mean_bps": str(basis_mean),
                     "basis_ewm_std_bps": str(sigma),
                     "basis_ewm_window_ms": str(self.config.ewm_window_ms),
+                    "z_exit": str(self.config.z_exit),
+                    "adverse_z_stop": str(self.config.adverse_z_stop),
+                    "beta": str(self.config.beta),
+                    "leader_symbol": self.config.leader_symbol,
                     "leader_move_bps": str(leader_move_bps),
+                    "fee_bps": str(self.config.fee_bps),
+                    "slippage_bps": str(self.config.slippage_bps),
+                    "safety_bps": str(self.config.safety_bps),
                     "cost_bps": str(cost_bps),
                 },
             )
@@ -125,7 +134,14 @@ class ResidualZScoreSignal:
                     "basis_ewm_mean_bps": str(basis_mean),
                     "basis_ewm_std_bps": str(sigma),
                     "basis_ewm_window_ms": str(self.config.ewm_window_ms),
+                    "z_exit": str(self.config.z_exit),
+                    "adverse_z_stop": str(self.config.adverse_z_stop),
+                    "beta": str(self.config.beta),
+                    "leader_symbol": self.config.leader_symbol,
                     "leader_move_bps": str(leader_move_bps),
+                    "fee_bps": str(self.config.fee_bps),
+                    "slippage_bps": str(self.config.slippage_bps),
+                    "safety_bps": str(self.config.safety_bps),
                     "cost_bps": str(cost_bps),
                 },
             )

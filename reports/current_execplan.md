@@ -2,17 +2,16 @@
 
 ## Objective
 
-Add user-facing repository documentation: root README and GitHub Wiki pages.
+Finalize explicit `spot_to_spot` and `perp_to_perp` profile support validation.
 
 ## Files
 
-- `README.md`
-- `docs/wiki/Home.md`
-- `docs/wiki/Architecture.md`
-- `docs/wiki/Safety.md`
-- `docs/wiki/Operations.md`
-- `docs/wiki/Development.md`
-- `docs/wiki/Research-and-Roadmap.md`
+- `llbot/universe/rotator.py`
+- `llbot/service/research_policy.py`
+- `tests/test_universe.py`
+- `tests/test_universe_provider.py`
+- `tests/test_research_policy.py`
+- `TASKS.md`
 - `memory/memory.json`
 - `memory/notes.md`
 - `reports/current_execplan.md`
@@ -20,34 +19,28 @@ Add user-facing repository documentation: root README and GitHub Wiki pages.
 
 ## Acceptance Checks
 
-- README explains purpose, safety defaults, setup, validation, core commands, and project layout.
-- Wiki pages cover architecture, safety, operations, development, and research roadmap.
-- Documentation does not include secrets, live-trading enablement, or unsupported private endpoint guidance.
+- `spot_to_spot` builds ranked Binance spot -> MEXC spot profiles from direct exchange snapshots.
+- `perp_to_perp` remains covered for Binance USD-M -> MEXC contract profiles.
+- Live universe rotation emits correct Binance bookTicker stream names and MEXC direct WebSocket subscriptions for both profiles.
+- MetaScalp execution remains guarded by existing planner tests; no submit/cancel/live path is enabled.
+- Trade/skip classifier and neural-network research are guarded until clean data and baseline proof exist.
 - Full `python -m unittest discover -s tests` passes.
 - `python -m compileall llbot apps tests` passes.
-- Documentation changes are pushed to GitHub.
-- Wiki pages are pushed to GitHub Wiki when the wiki repository is available.
 
 ## Status
 
-Completed on 2026-05-13.
+Completed on 2026-05-14.
 
 ## Validation
 
-- `.\.venv\Scripts\python.exe -m unittest discover -s tests`: passed, 163 tests.
+- `.\.venv\Scripts\python.exe -m unittest tests.test_universe tests.test_universe_provider tests.test_metascalp_execution`: passed, 30 tests.
+- `.\.venv\Scripts\python.exe -m unittest tests.test_research_policy`: passed, 4 tests.
+- `.\.venv\Scripts\python.exe -m unittest discover -s tests`: passed, 202 tests.
 - `.\.venv\Scripts\python.exe -m compileall llbot apps tests`: passed.
-- `git push`: passed; README and `docs/wiki/` source are on `origin/master`.
-- GitHub Wiki push: blocked because `https://github.com/kgorlov/AlphaFlip.wiki.git` returned `Repository not found`.
-- GitHub CLI wiki enable attempt: blocked because `gh` is not installed in this environment.
-- GitHub CLI installed and authenticated as `kgorlov`.
-- Repository settings configured with description, homepage, issues enabled, projects enabled, wiki enabled, and repository topics.
-- `gh auth setup-git`: passed; main repository git HTTPS access works.
-- GitHub Wiki retry after `--enable-wiki=true`: still blocked because `https://github.com/kgorlov/AlphaFlip.wiki.git` returns `Repository not found`.
-- After the first web-created wiki page, `https://github.com/kgorlov/AlphaFlip.wiki.git` became available.
-- Synced `docs/wiki/*.md` to `AlphaFlip.wiki.git` in wiki commit `6dcd9ef Sync AlphaFlip wiki pages`.
 
 ## Non-Goals
 
-- No trading logic changes.
-- No MetaScalp submit/cancel changes.
-- No live trading changes.
+- No live trading enablement.
+- No MetaScalp order submission or cancellation.
+- No private MEXC execution path.
+- No ML trade/skip classifier before clean tick/orderbook data exists.

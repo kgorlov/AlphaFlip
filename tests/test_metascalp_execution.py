@@ -6,6 +6,12 @@ from llbot.adapters.metascalp import MetaScalpClient
 from llbot.adapters.http_client import HttpRequestError
 from llbot.domain.enums import IntentType, MarketProfileName, MarketType, OrderStyle, RuntimeMode, Side, Venue
 from llbot.domain.models import Intent, SymbolProfile
+from llbot.execution.planner import (
+    EntryPlan,
+    apply_edge_order_style,
+    build_entry_intent,
+    select_order_style_for_edge,
+)
 from llbot.execution.metascalp_executor import (
     GuardedMetaScalpDemoExecutor,
     MetaScalpExecutorConfig,
@@ -70,6 +76,59 @@ class MetaScalpExecutionPlannerTests(TestCase):
 
         self.assertEqual(plan.payload["Side"], "Sell")
         self.assertTrue(plan.payload["ReduceOnly"])
+
+    def test_spot_exit_does_not_set_reduce_only_when_unsupported(self) -> None:
+        intent = _intent(intent_type=IntentType.EXIT_LONG, side=Side.SELL)
+        plan = build_metascalp_dry_run_order_plan(intent, _connection(), "BTCUSDT", _spot_profile())
+
+        self.assertFalse(plan.payload["ReduceOnly"])
+
+    def test_explicit_reduce_only_support_metadata_overrides_market_type(self) -> None:
+        intent = _intent(intent_type=IntentType.EXIT_LONG, side=Side.SELL)
+        profile = _spot_profile(metadata={"reduce_only_supported": True})
+
+        plan = build_metascalp_dry_run_order_plan(intent, _connection(), "BTCUSDT", profile)
+
+        self.assertTrue(plan.payload["ReduceOnly"])
+
+    def test_order_style_selection_requires_edge_thresholds(self) -> None:
+        passive = select_order_style_for_edge(
+            Decimal("15"),
+            taker_min_edge_bps=Decimal("8"),
+            maker_min_edge_bps=Decimal("14"),
+        )
+        aggressive = select_order_style_for_edge(
+            Decimal("9"),
+            taker_min_edge_bps=Decimal("8"),
+            maker_min_edge_bps=Decimal("14"),
+        )
+        blocked = select_order_style_for_edge(
+            Decimal("7"),
+            taker_min_edge_bps=Decimal("8"),
+            maker_min_edge_bps=Decimal("14"),
+        )
+
+        self.assertEqual(passive.order_style, OrderStyle.PASSIVE_LIMIT)
+        self.assertEqual(aggressive.order_style, OrderStyle.AGGRESSIVE_LIMIT)
+        self.assertFalse(blocked.allowed)
+
+    def test_apply_edge_order_style_builds_passive_intent_only_for_large_edge(self) -> None:
+        plan = apply_edge_order_style(
+            EntryPlan(
+                symbol="BTCUSDT",
+                profile=MarketProfileName.PERP_TO_PERP,
+                direction=IntentType.ENTER_LONG,
+                qty=Decimal("2"),
+                price_cap=Decimal("100.1"),
+                ttl_ms=3000,
+                expected_edge_bps=Decimal("15"),
+            ),
+            taker_min_edge_bps=Decimal("8"),
+            maker_min_edge_bps=Decimal("14"),
+        )
+        intent = build_entry_intent(plan, created_ts_ms=123)
+
+        self.assertEqual(intent.order_style, OrderStyle.PASSIVE_LIMIT)
 
     def test_validation_rejects_quantity_price_and_notional(self) -> None:
         self.assertEqual(
@@ -414,6 +473,24 @@ def _profile() -> SymbolProfile:
         price_tick=Decimal("0.1"),
         min_notional_usd=Decimal("200"),
         contract_size=Decimal("1"),
+    )
+
+
+def _spot_profile(metadata: dict[str, object] | None = None) -> SymbolProfile:
+    return SymbolProfile(
+        canonical_symbol="BTCUSDT",
+        leader_symbol="BTCUSDT",
+        lagger_symbol="BTCUSDT",
+        profile=MarketProfileName.SPOT_TO_SPOT,
+        leader_venue=Venue.BINANCE,
+        lagger_venue=Venue.MEXC,
+        leader_market=MarketType.SPOT,
+        lagger_market=MarketType.SPOT,
+        min_qty=Decimal("1"),
+        qty_step=Decimal("1"),
+        price_tick=Decimal("0.1"),
+        min_notional_usd=Decimal("200"),
+        metadata=metadata or {},
     )
 
 

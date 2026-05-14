@@ -2000,3 +2000,563 @@ Coverage added:
 - GitHub Actions CI workflow for unit tests and compile check;
 - read-only dashboard refresh CLI;
 - local-only static dashboard server wrapper and host validation.
+
+## 2026-05-13 Residual Paper Exit Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_replay_runner
+```
+
+Result:
+
+```text
+Ran 15 tests in 0.010s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 166 tests in 1.559s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Coverage added:
+
+- residual z-score long paper exit on mean reversion;
+- residual z-score short paper exit on mean reversion;
+- residual z-score adverse movement paper stop;
+- paper exit audit records retain entry residual features for diagnosis.
+
+## 2026-05-13 Backend Hardening Batch
+
+Targeted commands:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_universe tests.test_health
+.\.venv\Scripts\python.exe -m unittest tests.test_replay_runner tests.test_signal_models
+```
+
+Result:
+
+```text
+Ran 18 tests in 0.134s
+OK
+
+Ran 24 tests in 0.011s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 169 tests in 0.903s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Coverage added:
+
+- top-N live universe selection and bounded rotation deltas;
+- per-symbol/per-venue stale feed checks from `SymbolProfile`;
+- paper/replay audit top-level fields for basis, z-score, impulse, lag, fees, slippage, and safety bps.
+
+## 2026-05-13 Execution Safety Batch
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_metascalp_execution tests.test_direct_mexc_policy
+```
+
+Result:
+
+```text
+Ran 25 tests in 0.032s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 176 tests in 0.897s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Coverage added:
+
+- edge-gated passive vs aggressive order style selection;
+- reduce-only support gating for MetaScalp order plans;
+- direct MEXC execution policy gates for v1 disablement, idempotency, signed REST, IP whitelist, scoped keys, pre-trade validation metadata, and official endpoints only.
+
+## 2026-05-14 MEXC Spot Protobuf Parser Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_ws_parsers
+```
+
+Result:
+
+```text
+Ran 12 tests in 0.001s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 180 tests in 0.927s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Coverage added:
+
+- MEXC spot public WebSocket subscription helpers for aggregated book ticker, aggregated depth, limit depth, and ping.
+- Minimal protobuf decoder for documented public wrapper fields and book ticker/depth bodies.
+- Normalized spot `BookTicker` and `OrderBookDepth` parsing with exchange send timestamps and local receive timestamps.
+- Parser ignores JSON/control frames and unknown protobuf bodies instead of emitting false market data.
+
+## 2026-05-14 Replay Vs Paper PnL Comparison Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_paper_pnl_compare tests.test_compare_replay_paper_pnl_cli
+```
+
+Result:
+
+```text
+Ran 5 tests in 0.004s
+OK
+```
+
+Offline CLI smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\compare_replay_paper_pnl.py --replay-summary reports\replay_paper_summary_smoke.json --paper-summary reports\runner_paper_summary_smoke.json --out reports\replay_paper_pnl_compare_smoke.json
+```
+
+Result: pass, matched smoke summaries with zero PnL/count deltas and explicit no-submit/no-cancel/no-live flags.
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 185 tests in 0.905s
+OK
+```
+
+Additional checks:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+.\.venv\Scripts\python.exe -m json.tool reports\replay_paper_pnl_compare_smoke.json
+```
+
+Result: pass.
+
+Coverage added:
+
+- Offline replay-vs-paper PnL comparison service for saved summary artifacts.
+- CLI `apps\compare_replay_paper_pnl.py` with JSON report output and safety flags.
+- Deltas for realized/unrealized/gross/cost/total net PnL.
+- Deltas for fills, exits, open positions, risk counts, audit records, and per-model intent counts.
+- Configurable PnL tolerance while count and intent mismatches remain exact.
+
+## 2026-05-14 Replay Research Metrics Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_replay_report
+```
+
+Result:
+
+```text
+Ran 4 tests in 0.002s
+OK
+```
+
+Replay research smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\replay_backtest.py --input data\replay\smoke_binance_usdm_BTCUSDT.jsonl --input data\replay\smoke_mexc_contract_BTC_USDT.jsonl --min-samples 1 --paper --fee-bps 5 --slippage-bps 5 --take-profit-bps 10 --stale-feed-ms 1500 --compare-fill-models --research-report-out reports\replay_research_smoke.json
+```
+
+Result: pass, wrote `research_metrics` into `reports\replay_research_smoke.json`.
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 186 tests in 0.887s
+OK
+```
+
+Additional checks:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+.\.venv\Scripts\python.exe -m json.tool reports\replay_research_smoke.json
+```
+
+Result: pass.
+
+Coverage added:
+
+- `research_metrics.catch_up` with catch-up exit count and duration distribution.
+- `research_metrics.false_positives` with closed trade count, false-positive count, and rate.
+- `research_metrics.slippage_by_hour` grouped by UTC hour.
+- `research_metrics.performance_by_volatility_regime` grouped by impulse magnitude regime.
+- Existing research report fields remain present and compatible.
+
+## 2026-05-14 Symbol Lead-Lag Selection Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_replay_report
+```
+
+Result:
+
+```text
+Ran 5 tests in 0.002s
+OK
+```
+
+Replay research smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\replay_backtest.py --input data\replay\smoke_binance_usdm_BTCUSDT.jsonl --input data\replay\smoke_mexc_contract_BTC_USDT.jsonl --min-samples 1 --paper --fee-bps 5 --slippage-bps 5 --take-profit-bps 10 --stale-feed-ms 1500 --compare-fill-models --research-report-out reports\replay_research_smoke.json
+```
+
+Result: pass, wrote `symbol_selection` into `reports\replay_research_smoke.json`. The smoke dataset lacks enough paired MEXC quotes, so the symbol entry is retained with `reason=insufficient_samples`.
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 187 tests in 0.961s
+OK
+```
+
+Additional checks:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+.\.venv\Scripts\python.exe -m json.tool reports\replay_research_smoke.json
+```
+
+Result: pass.
+
+Coverage added:
+
+- `symbol_selection` replay research section.
+- Per-symbol dynamic leadership estimation using existing midpoint lead-lag scorer.
+- Candidate ranking by lag stability, MEXC top-of-book liquidity proxy, MEXC spread proxy, and replay-paper realized PnL.
+- Explicit rejection reasons for symbols without enough paired quote samples.
+
+## 2026-05-14 Dashboard Historical Sparklines Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_dashboard tests.test_dashboard_ops
+```
+
+Result:
+
+```text
+Ran 9 tests in 0.008s
+OK
+```
+
+Dashboard build smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\build_dashboard.py --health reports\health_check_metascalp_smoke.json --runner-summary reports\metascalp_demo_runner_live_dry_both_streams.json --memory memory\memory.json --history-report "Replay=reports\replay_research_smoke.json" --history-report "Paper=reports\runner_paper_summary_smoke.json" --out reports\dashboard.html
+```
+
+Result: pass, rebuilt `reports\dashboard.html` with read-only historical sparklines.
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 187 tests in 0.958s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Coverage added:
+
+- Dashboard history artifacts loaded from repeated local `--history-report Label=path` JSON files.
+- SVG sparklines for feed max gap, intents, fills, PnL, and health state.
+- Missing history files are ignored safely.
+- Dashboard refresh forwards history report arguments while remaining read-only.
+
+## 2026-05-14 Dashboard Screenshot Smoke Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_dashboard_screenshot_smoke
+```
+
+Result:
+
+```text
+Ran 4 tests in 0.006s
+OK
+```
+
+Real headless browser smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\dashboard_screenshot_smoke.py --dashboard reports\dashboard.html --out reports\dashboard_screenshot_smoke.json
+```
+
+Result: pass, using local Chrome at `C:\Program Files\Google\Chrome\Application\chrome.exe`.
+
+Artifacts:
+
+- `reports\dashboard_desktop_smoke.png`: 1440 x 1100, valid PNG.
+- `reports\dashboard_mobile_smoke.png`: 390 x 900, valid PNG.
+- `reports\dashboard_screenshot_smoke.json`: valid JSON summary with read-only safety flags.
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 191 tests in 1.014s
+OK
+```
+
+Additional checks:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+.\.venv\Scripts\python.exe -m json.tool reports\dashboard_screenshot_smoke.json
+```
+
+Result: pass.
+
+Coverage added:
+
+- Local headless Chrome/Edge dashboard screenshot smoke CLI.
+- Desktop and mobile viewport PNG capture from static `file://` dashboard HTML.
+- PNG signature/dimension validation.
+- JSON safety summary with no-submit/no-cancel/no-secrets/no-live flags.
+
+## 2026-05-14 Saved Day Replay From Parquet/DuckDB Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_parquet_sink tests.test_duckdb_store tests.test_day_replay
+```
+
+Result:
+
+```text
+Ran 9 tests in 0.716s
+OK
+```
+
+Parquet smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\export_replay_parquet.py --input data\replay\smoke_binance_usdm_BTCUSDT.jsonl --input data\replay\smoke_mexc_contract_BTC_USDT.jsonl --out reports\replay_smoke.parquet
+```
+
+Result: pass, wrote 4 replay rows.
+
+Day replay smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\replay_day.py --day 2026-05-13 --parquet reports\replay_smoke.parquet --min-samples 1 --fee-bps 5 --slippage-bps 5 --take-profit-bps 10 --stale-feed-ms 1500 --out reports\replay_day_smoke.json --audit-out reports\replay_day_audit_smoke.jsonl --research-out reports\replay_day_research_smoke.json
+```
+
+Result: pass. The smoke replay had 4 input events and 4 replayed events; the saved smoke data lacks paired MEXC ticker quotes, so paper health correctly reports missing MEXC execution stream.
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 196 tests in 1.034s
+OK
+```
+
+Additional checks:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+.\.venv\Scripts\python.exe -m json.tool reports\replay_day_smoke.json
+.\.venv\Scripts\python.exe -m json.tool reports\replay_day_research_smoke.json
+```
+
+Result: pass.
+
+Coverage added:
+
+- Parquet replay rows can round-trip back to `ReplayEvent` objects.
+- DuckDB market replay events can be loaded by source/day.
+- Offline day replay service and CLI reuse the shared paper runner and replay research report builder.
+- CLI writes summary, audit, and research artifacts with no-submit/no-cancel/no-secrets/no-live flags.
+
+## 2026-05-14 Market Profile Support Wrap-Up
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_universe tests.test_universe_provider tests.test_metascalp_execution
+```
+
+Result:
+
+```text
+Ran 30 tests in 0.046s
+OK
+```
+
+Research guardrail command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_research_policy
+```
+
+Result:
+
+```text
+Ran 4 tests in 0.000s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 202 tests in 1.110s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Coverage added:
+
+- `spot_to_spot` universe provider test for Binance spot -> MEXC spot profile construction.
+- Existing `perp_to_perp` provider coverage remains green for Binance USD-M -> MEXC contract profile construction.
+- Live universe rotation now uses the shared MEXC spot protobuf aggregated bookTicker subscription helper.
+- Spot and perp rotation tests validate direct Binance/MEXC market-data subscription planning.
+- MetaScalp execution remains guarded by planner tests; no submit/cancel/live path was enabled.
+- Research policy tests keep `trade/skip` classifiers and neural-network training blocked until clean data, baseline proof, and explicit approval gates are satisfied.

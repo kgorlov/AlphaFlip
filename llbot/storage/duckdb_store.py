@@ -455,6 +455,43 @@ class DuckDbExecutionStore:
                 trades += 1
         return {"market_quotes": quotes, "market_trades": trades}
 
+    def load_replay_events(
+        self,
+        *,
+        source: str | None = None,
+        day: str | None = None,
+    ) -> list[Any]:
+        """Load previously ingested replay events from market tables."""
+
+        conn = self._require_conn()
+        conditions = []
+        parameters: list[Any] = []
+        if source is not None:
+            conditions.append("source = ?")
+            parameters.append(source)
+        where = "WHERE " + " AND ".join(conditions) if conditions else ""
+        rows = conn.execute(
+            f"""
+            SELECT raw_json FROM market_quotes {where}
+            UNION ALL
+            SELECT raw_json FROM market_trades {where}
+            """,
+            parameters * 2 if conditions else [],
+        ).fetchall()
+        events = [_replay_event_from_json(row[0]) for row in rows]
+        if day is not None:
+            events = [
+                event for event in events
+                if isinstance(getattr(event, "captured_at_utc", None), str)
+                and getattr(event, "captured_at_utc").startswith(day)
+            ]
+        return sorted(events, key=lambda event: (
+            getattr(event, "local_ts_ms") or getattr(event, "exchange_ts_ms") or 0,
+            getattr(event, "exchange_ts_ms") or 0,
+            getattr(event, "venue"),
+            getattr(event, "symbol"),
+        ))
+
     def ingest_audit_records(
         self,
         records: list[dict[str, Any]],
@@ -580,6 +617,13 @@ def load_reconciliation_report(path: str | Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError("Reconciliation report must be a JSON object")
     return payload
+
+
+def _replay_event_from_json(raw_json: str):
+    from llbot.storage.replay_jsonl import ReplayEvent
+
+    payload = json.loads(raw_json)
+    return ReplayEvent(**payload)
 
 
 def _list(value: Any) -> list[dict[str, Any]]:

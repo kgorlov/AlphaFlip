@@ -3,6 +3,7 @@
 import html
 import json
 from dataclasses import dataclass
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,7 @@ class DashboardArtifacts:
     runner_summary: dict[str, Any] | None = None
     memory: dict[str, Any] | None = None
     reports: tuple["DashboardReportLink", ...] = ()
+    history: tuple["DashboardHistoryPoint", ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,18 +25,31 @@ class DashboardReportLink:
     size_bytes: int | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class DashboardHistoryPoint:
+    label: str
+    path: str
+    feed_max_gap_ms: Decimal
+    intents: Decimal
+    fills: Decimal
+    pnl_usd: Decimal
+    health_state: Decimal
+
+
 def load_dashboard_artifacts(
     *,
     health_path: str | Path | None = None,
     runner_summary_path: str | Path | None = None,
     memory_path: str | Path | None = None,
     report_paths: dict[str, str | Path] | None = None,
+    history_paths: dict[str, str | Path] | None = None,
 ) -> DashboardArtifacts:
     return DashboardArtifacts(
         health=_load_json(health_path),
         runner_summary=_load_json(runner_summary_path),
         memory=_load_json(memory_path),
         reports=_report_links(report_paths or {}),
+        history=_history_points(history_paths or {}),
     )
 
 
@@ -72,6 +87,7 @@ def render_dashboard(artifacts: DashboardArtifacts) -> str:
             _section("Feed Streams", _streams_table(streams, runner_limits)),
             _section("MetaScalp", _key_values(metascalp)),
             _section("Paper Summary", _key_values(paper_summary)),
+            _section("Historical Sparklines", _history_sparklines(artifacts.history)),
             _section("Reports", _reports_table(artifacts.reports)),
             _section("Safety", _key_values(safety)),
             _section("Progress", _key_values(progress)),
@@ -163,6 +179,74 @@ def _reports_table(reports: tuple[DashboardReportLink, ...]) -> str:
     return _table(("Report", "Status", "Path", "Bytes"), rows)
 
 
+def _history_sparklines(history: tuple[DashboardHistoryPoint, ...]) -> str:
+    if not history:
+        return '<p class="muted">No historical report data</p>'
+    rows = [
+        _sparkline_row("Feed Max Gap Ms", [point.feed_max_gap_ms for point in history]),
+        _sparkline_row("Intents", [point.intents for point in history]),
+        _sparkline_row("Fills", [point.fills for point in history]),
+        _sparkline_row("PnL USD", [point.pnl_usd for point in history]),
+        _sparkline_row("Health State", [point.health_state for point in history]),
+    ]
+    return (
+        '<div class="history-grid">'
+        + "".join(rows)
+        + "</div>"
+        + _table(
+            ("Label", "Feed Gap", "Intents", "Fills", "PnL", "Health", "Path"),
+            [
+                "<tr>"
+                f"<td>{_esc(point.label)}</td>"
+                f"<td>{_esc(point.feed_max_gap_ms)}</td>"
+                f"<td>{_esc(point.intents)}</td>"
+                f"<td>{_esc(point.fills)}</td>"
+                f"<td>{_esc(point.pnl_usd)}</td>"
+                f"<td>{_esc(point.health_state)}</td>"
+                f"<td>{_esc(point.path)}</td>"
+                "</tr>"
+                for point in history
+            ],
+        )
+    )
+
+
+def _sparkline_row(label: str, values: list[Decimal]) -> str:
+    return (
+        '<div class="spark-item">'
+        f"<div><strong>{_esc(label)}</strong><span>{_esc(_value_range(values))}</span></div>"
+        f'{_sparkline_svg(values)}'
+        "</div>"
+    )
+
+
+def _sparkline_svg(values: list[Decimal]) -> str:
+    width = Decimal("160")
+    height = Decimal("42")
+    if len(values) == 1:
+        y = height / Decimal("2")
+        points = f"0,{y} {width},{y}"
+    else:
+        min_value = min(values)
+        max_value = max(values)
+        span = max_value - min_value
+        step = width / Decimal(len(values) - 1)
+        coords = []
+        for idx, value in enumerate(values):
+            x = step * Decimal(idx)
+            if span == 0:
+                y = height / Decimal("2")
+            else:
+                y = height - ((value - min_value) / span * height)
+            coords.append(f"{_svg_num(x)},{_svg_num(y)}")
+        points = " ".join(coords)
+    return (
+        '<svg class="spark" viewBox="0 0 160 42" role="img" aria-label="sparkline">'
+        f'<polyline points="{_esc(points)}"></polyline>'
+        "</svg>"
+    )
+
+
 def _key_values(payload: dict[str, Any]) -> str:
     if not payload:
         return '<p class="muted">No data</p>'
@@ -186,6 +270,32 @@ def _load_json(path: str | Path | None) -> dict[str, Any] | None:
     if not isinstance(payload, dict):
         raise ValueError(f"Expected JSON object in {path}")
     return payload
+
+
+def _history_points(history_paths: dict[str, str | Path]) -> tuple[DashboardHistoryPoint, ...]:
+    points: list[DashboardHistoryPoint] = []
+    for label, raw_path in history_paths.items():
+        path = Path(raw_path)
+        if not path.exists() or not path.is_file():
+            continue
+        payload = _load_json(path)
+        if payload is None:
+            continue
+        points.append(_history_point(str(label), path.as_posix(), payload))
+    return tuple(points)
+
+
+def _history_point(label: str, path: str, payload: dict[str, Any]) -> DashboardHistoryPoint:
+    summary = _dict(payload.get("summary")) or _dict(payload.get("paper_summary")) or payload
+    return DashboardHistoryPoint(
+        label=label,
+        path=path,
+        feed_max_gap_ms=_max_feed_gap(payload),
+        intents=_decimal(summary.get("intents")),
+        fills=_decimal(summary.get("fills")),
+        pnl_usd=_decimal(summary.get("realized_pnl_usd")) + _decimal(summary.get("unrealized_pnl_usd")),
+        health_state=_health_state(payload),
+    )
 
 
 def _report_links(report_paths: dict[str, str | Path]) -> tuple[DashboardReportLink, ...]:
@@ -220,6 +330,46 @@ def _value(value: Any) -> str:
     if isinstance(value, dict | list):
         return _compact_json(value)
     return str(value)
+
+
+def _max_feed_gap(payload: dict[str, Any]) -> Decimal:
+    streams = _dict(_dict(payload.get("feed_health")).get("streams"))
+    values = [_decimal(_dict(stream).get("max_gap_ms")) for stream in streams.values()]
+    if values:
+        return max(values)
+    health = _dict(payload.get("health"))
+    streams = _dict(health.get("streams"))
+    values = [_decimal(_dict(stream).get("max_gap_ms")) for stream in streams.values()]
+    return max(values) if values else Decimal("0")
+
+
+def _health_state(payload: dict[str, Any]) -> Decimal:
+    status = str(_dict(payload.get("system")).get("status", "")).lower()
+    if not status:
+        status = str(_dict(_dict(payload.get("feed_health")).get("decision")).get("reason", "")).lower()
+    if status in {"ok", "healthy"}:
+        return Decimal("1")
+    if status in {"warn", "warning", "stale_stream", "missing_stream"}:
+        return Decimal("0.5")
+    if status in {"critical", "error"}:
+        return Decimal("0")
+    return Decimal("1") if not status else Decimal("0.5")
+
+
+def _decimal(value: Any) -> Decimal:
+    if value is None or value == "":
+        return Decimal("0")
+    return Decimal(str(value))
+
+
+def _value_range(values: list[Decimal]) -> str:
+    if not values:
+        return ""
+    return f"{min(values)} -> {max(values)}"
+
+
+def _svg_num(value: Decimal) -> str:
+    return f"{float(value):.2f}".rstrip("0").rstrip(".")
 
 
 def _esc(value: Any) -> str:
@@ -340,6 +490,41 @@ code {
   color: #24323b;
 }
 .muted { color: var(--muted); }
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.spark-item {
+  min-height: 82px;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.spark-item div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.spark-item span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.spark {
+  display: block;
+  width: 100%;
+  height: 42px;
+}
+.spark polyline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 @media (max-width: 680px) {
   .topbar {
     align-items: flex-start;

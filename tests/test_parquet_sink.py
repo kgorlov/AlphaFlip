@@ -5,7 +5,11 @@ from unittest import TestCase
 
 from llbot.domain.enums import MarketType, Venue
 from llbot.domain.market_data import BookTicker
-from llbot.storage.parquet_sink import read_replay_events_parquet, write_replay_events_parquet
+from llbot.storage.parquet_sink import (
+    read_replay_events_parquet,
+    read_replay_events_parquet_events,
+    write_replay_events_parquet,
+)
 from llbot.storage.replay_jsonl import replay_event_from_book_ticker
 
 
@@ -20,6 +24,17 @@ class ParquetSinkTests(TestCase):
         self.assertEqual(rows[0]["event_type"], "book_ticker")
         self.assertEqual(rows[0]["venue"], "binance")
         self.assertEqual(rows[0]["bid_price"], "100")
+
+    def test_reads_parquet_rows_back_as_replay_events(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "replay.parquet"
+            write_replay_events_parquet([_event()], out)
+            events = read_replay_events_parquet_events(out)
+
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0].event_type, "book_ticker")
+        self.assertEqual(events[0].venue, "binance")
+        self.assertEqual(events[0].payload["ask_price"], "101")
 
 
 def _event():

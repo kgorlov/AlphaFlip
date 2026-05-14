@@ -70,6 +70,11 @@ class ReplayRunnerTests(TestCase):
         self.assertIsNone(audit_records[0].skip_reason)
         self.assertEqual(audit_records[0].fill_reason, "touch")
         self.assertEqual(audit_records[0].mexc_quote["symbol"], "BTC_USDT")
+        self.assertEqual(audit_records[0].impulse_bps, Decimal("100"))
+        self.assertEqual(audit_records[0].lag_bps, Decimal("100"))
+        self.assertEqual(audit_records[0].fee_bps, Decimal("0"))
+        self.assertEqual(audit_records[0].slippage_bps, Decimal("0"))
+        self.assertEqual(audit_records[0].safety_bps, Decimal("0"))
 
     def test_replay_paper_records_risk_block_reason(self) -> None:
         summary, audit_records = replay_paper_events(
@@ -289,6 +294,55 @@ class ReplayRunnerTests(TestCase):
         self.assertEqual(audit_records[-1].decision_result, "filled")
         self.assertEqual(audit_records[-1].side, "sell")
 
+    def test_replay_paper_closes_residual_long_on_zscore_mean_reversion(self) -> None:
+        summary, audit_records = replay_paper_events(
+            _residual_exit_events(exit_binance_mid="100", exit_mexc_mid="100"),
+            [_ImmediateResidualSignal(Side.BUY)],
+            risk_engine=BasicRiskEngine(RiskConfig()),
+            portfolio_state=_portfolio_state(),
+            execution_symbol="BTC_USDT",
+            fill_model=FillModel.TOUCH,
+        )
+
+        self.assertEqual(summary.fills, 1)
+        self.assertEqual(summary.closed_positions, 1)
+        self.assertEqual(summary.open_positions, 0)
+        exit_record = audit_records[-1]
+        self.assertEqual(exit_record.exit_reason, "zscore_mean_reversion")
+        self.assertEqual(exit_record.order_request["reduce_only"], True)
+        self.assertEqual(exit_record.features["entry_features"]["model"], "residual_zscore")
+        self.assertEqual(exit_record.rolling_basis_bps, Decimal("-60"))
+        self.assertEqual(exit_record.z_score, Decimal("-3"))
+
+    def test_replay_paper_closes_residual_short_on_zscore_mean_reversion(self) -> None:
+        summary, audit_records = replay_paper_events(
+            _residual_exit_events(exit_binance_mid="100", exit_mexc_mid="100"),
+            [_ImmediateResidualSignal(Side.SELL)],
+            risk_engine=BasicRiskEngine(RiskConfig()),
+            portfolio_state=_portfolio_state(),
+            execution_symbol="BTC_USDT",
+            fill_model=FillModel.TOUCH,
+        )
+
+        self.assertEqual(summary.fills, 1)
+        self.assertEqual(summary.closed_positions, 1)
+        self.assertEqual(audit_records[-1].exit_reason, "zscore_mean_reversion")
+        self.assertEqual(audit_records[-1].intent_type, "exit_short")
+
+    def test_replay_paper_closes_residual_long_on_adverse_move(self) -> None:
+        summary, audit_records = replay_paper_events(
+            _residual_exit_events(exit_binance_mid="101", exit_mexc_mid="100"),
+            [_ImmediateResidualSignal(Side.BUY)],
+            risk_engine=BasicRiskEngine(RiskConfig()),
+            portfolio_state=_portfolio_state(),
+            execution_symbol="BTC_USDT",
+            fill_model=FillModel.TOUCH,
+        )
+
+        self.assertEqual(summary.fills, 1)
+        self.assertEqual(summary.closed_positions, 1)
+        self.assertEqual(audit_records[-1].exit_reason, "adverse_move_stop")
+
 
 def _impulse_model(ttl_ms: int = 3000) -> ImpulseTransferSignal:
     return ImpulseTransferSignal(
@@ -339,6 +393,15 @@ def _reversal_events() -> list:
     ]
 
 
+def _residual_exit_events(exit_binance_mid: str, exit_mexc_mid: str) -> list:
+    return [
+        replay_event_from_book_ticker(_ticker(Venue.BINANCE, "BTCUSDT", "100", 0)),
+        replay_event_from_book_ticker(_ticker(Venue.MEXC, "BTC_USDT", "100", 100)),
+        replay_event_from_book_ticker(_ticker(Venue.BINANCE, "BTCUSDT", exit_binance_mid, 150)),
+        replay_event_from_book_ticker(_ticker(Venue.MEXC, "BTC_USDT", exit_mexc_mid, 200)),
+    ]
+
+
 def _portfolio_state(metadata: dict[str, object] | None = None) -> PortfolioState:
     return PortfolioState(
         open_positions=0,
@@ -365,6 +428,48 @@ class _ImmediateLongSignal:
                 expected_edge_bps=Decimal("5"),
                 created_ts_ms=q.local_ts_ms,
                 features={"model": "immediate"},
+            )
+        ]
+
+    def on_trade(self, t: Trade) -> list[Intent]:
+        return []
+
+
+class _ImmediateResidualSignal:
+    def __init__(self, side: Side) -> None:
+        self.side = side
+        self.emitted = False
+
+    def on_quote(self, q: Quote) -> list[Intent]:
+        if self.emitted or q.venue != Venue.MEXC:
+            return []
+        self.emitted = True
+        intent_type = IntentType.ENTER_LONG if self.side == Side.BUY else IntentType.ENTER_SHORT
+        return [
+            Intent(
+                intent_id=f"residual-immediate-{q.local_ts_ms}",
+                symbol="BTCUSDT",
+                profile=MarketProfileName.PERP_TO_PERP,
+                intent_type=intent_type,
+                side=self.side,
+                qty=Decimal("1"),
+                price_cap=q.ask if self.side == Side.BUY else q.bid,
+                ttl_ms=3000,
+                order_style=OrderStyle.AGGRESSIVE_LIMIT,
+                confidence=Decimal("1"),
+                expected_edge_bps=Decimal("5"),
+                created_ts_ms=q.local_ts_ms,
+                features={
+                    "model": "residual_zscore",
+                    "leader_symbol": "BTCUSDT",
+                    "basis_bps": "-60",
+                    "z_score": "-3",
+                    "basis_ewm_mean_bps": "0",
+                    "basis_ewm_std_bps": "20",
+                    "z_exit": "0.4",
+                    "adverse_z_stop": "4",
+                    "beta": "1",
+                },
             )
         ]
 

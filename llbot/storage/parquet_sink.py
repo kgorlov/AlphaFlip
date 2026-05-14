@@ -32,6 +32,12 @@ def read_replay_events_parquet(path: str | Path) -> list[dict]:
     return pq.read_table(path).to_pylist()
 
 
+def read_replay_events_parquet_events(path: str | Path) -> list[ReplayEvent]:
+    """Read Parquet replay rows back into normalized ReplayEvent objects."""
+
+    return [_event_from_row(row) for row in read_replay_events_parquet(path)]
+
+
 def _event_row(event: ReplayEvent) -> dict:
     payload = event.payload
     return {
@@ -51,6 +57,23 @@ def _event_row(event: ReplayEvent) -> dict:
         "depth_version": payload.get("version"),
         "payload_json": _json(payload),
     }
+
+
+def _event_from_row(row: dict) -> ReplayEvent:
+    import json
+
+    return ReplayEvent(
+        schema_version=str(row.get("schema_version") or "1.0.0"),
+        captured_at_utc=str(row.get("captured_at_utc") or ""),
+        event_type=str(row["event_type"]),
+        venue=str(row["venue"]),
+        market=str(row["market"]),
+        symbol=str(row["symbol"]),
+        local_ts_ms=row.get("local_ts_ms"),
+        exchange_ts_ms=row.get("exchange_ts_ms"),
+        receive_monotonic_ns=row.get("receive_monotonic_ns"),
+        payload=json.loads(str(row.get("payload_json") or "{}")),
+    )
 
 
 def _schema():

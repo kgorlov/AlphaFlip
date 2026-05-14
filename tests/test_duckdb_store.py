@@ -103,6 +103,18 @@ class DuckDbExecutionStoreTests(TestCase):
                 self.assertEqual(store.query_all("SELECT intent_id FROM signal_intents")[0][0], "intent-1")
                 self.assertEqual(store.query_all("SELECT net_pnl_usd FROM pnl_facts")[0][0], Decimal("1.230000000000000000"))
 
+    def test_loads_replay_events_from_market_tables_by_source_and_day(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            db_path = Path(tmp) / "facts.duckdb"
+            with DuckDbExecutionStore(db_path) as store:
+                event = _book_event()
+                store.ingest_replay_events([event], source="day-smoke")
+                loaded = store.load_replay_events(source="day-smoke", day=event.captured_at_utc[:10])
+
+        self.assertEqual(len(loaded), 1)
+        self.assertEqual(loaded[0].event_type, "book_ticker")
+        self.assertEqual(loaded[0].symbol, "BTCUSDT")
+
 
 def _report() -> dict:
     return {

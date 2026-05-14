@@ -19,6 +19,8 @@ class DashboardRefreshTests(TestCase):
                 "reports/dashboard.html",
                 "--report-link",
                 "Daily=reports/daily.json",
+                "--history-report",
+                "Run=reports/run.json",
             ]
         )
 
@@ -31,6 +33,7 @@ class DashboardRefreshTests(TestCase):
         self.assertNotIn("--confirm-demo-submit", health_cmd)
         self.assertIn("build_dashboard.py", dashboard_cmd[1])
         self.assertIn("Daily=reports/daily.json", dashboard_cmd)
+        self.assertIn("Run=reports/run.json", dashboard_cmd)
 
     def test_refresh_runs_two_commands_and_reports_safety_flags(self) -> None:
         args = build_refresh_parser().parse_args([])

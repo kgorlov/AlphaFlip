@@ -111,6 +111,41 @@ code {
   color: #24323b;
 }
 .muted { color: var(--muted); }
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.spark-item {
+  min-height: 82px;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.spark-item div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.spark-item span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.spark {
+  display: block;
+  width: 100%;
+  height: 42px;
+}
+.spark polyline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 @media (max-width: 680px) {
   .topbar {
     align-items: flex-start;
@@ -131,9 +166,10 @@ code {
 <section class="band"><h2>Feed Streams</h2><div class="table-wrap"><table><thead><tr><th>Stream</th><th>Quotes</th><th>Max Gap Ms</th><th>Stale Gaps</th></tr></thead><tbody><tr><td>binance:BTCUSDT</td><td>6059</td><td>144</td><td>0</td></tr><tr><td>mexc:BTC_USDT</td><td>1</td><td>0</td><td>0</td></tr></tbody></table></div></section>
 <section class="band"><h2>MetaScalp</h2><div class="table-wrap"><table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody><tr><td>base_url</td><td><code>http://127.0.0.1:17845</code></td></tr><tr><td>connected</td><td><code>True</code></td></tr><tr><td>connection_id</td><td><code>4</code></td></tr><tr><td>connection_name</td><td><code>MEXC: Futures</code></td></tr><tr><td>demo_mode</td><td><code>True</code></td></tr><tr><td>submit_allowed</td><td><code>False</code></td></tr></tbody></table></div></section>
 <section class="band"><h2>Paper Summary</h2><div class="table-wrap"><table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody><tr><td>audit_records</td><td><code>0</code></td></tr><tr><td>closed_positions</td><td><code>0</code></td></tr><tr><td>fills</td><td><code>0</code></td></tr><tr><td>gross_realized_pnl_usd</td><td><code>0</code></td></tr><tr><td>gross_unrealized_pnl_usd</td><td><code>0</code></td></tr><tr><td>intent_counts</td><td><code>{}</code></td></tr><tr><td>intents</td><td><code>0</code></td></tr><tr><td>not_filled</td><td><code>0</code></td></tr><tr><td>open_positions</td><td><code>0</code></td></tr><tr><td>processed_events</td><td><code>6060</code></td></tr><tr><td>quotes</td><td><code>6060</code></td></tr><tr><td>realized_cost_usd</td><td><code>0</code></td></tr><tr><td>realized_pnl_usd</td><td><code>0</code></td></tr><tr><td>risk_allowed</td><td><code>0</code></td></tr><tr><td>risk_blocked</td><td><code>0</code></td></tr><tr><td>skipped_events</td><td><code>0</code></td></tr><tr><td>unrealized_cost_usd</td><td><code>0</code></td></tr><tr><td>unrealized_pnl_usd</td><td><code>0</code></td></tr></tbody></table></div></section>
-<section class="band"><h2>Reports</h2><div class="table-wrap"><table><thead><tr><th>Report</th><th>Status</th><th>Path</th><th>Bytes</th></tr></thead><tbody><tr><td>Replay Research</td><td><span class="pill pill-exists">exists</span></td><td><a href="reports/replay_research_smoke.json">reports/replay_research_smoke.json</a></td><td>1978</td></tr><tr><td>Demo Fill Compare</td><td><span class="pill pill-exists">exists</span></td><td><a href="reports/demo_fill_compare_smoke.json">reports/demo_fill_compare_smoke.json</a></td><td>380</td></tr><tr><td>Private Reconciliation</td><td><span class="pill pill-exists">exists</span></td><td><a href="reports/metascalp_reconcile_smoke.json">reports/metascalp_reconcile_smoke.json</a></td><td>1747</td></tr><tr><td>Private Capture Summary</td><td><span class="pill pill-exists">exists</span></td><td><a href="reports/metascalp_private_capture_store_smoke.json">reports/metascalp_private_capture_store_smoke.json</a></td><td>615</td></tr></tbody></table></div></section>
+<section class="band"><h2>Historical Sparklines</h2><div class="history-grid"><div class="spark-item"><div><strong>Feed Max Gap Ms</strong><span>0 -&gt; 0</span></div><svg class="spark" viewBox="0 0 160 42" role="img" aria-label="sparkline"><polyline points="0,21 160,21"></polyline></svg></div><div class="spark-item"><div><strong>Intents</strong><span>0 -&gt; 0</span></div><svg class="spark" viewBox="0 0 160 42" role="img" aria-label="sparkline"><polyline points="0,21 160,21"></polyline></svg></div><div class="spark-item"><div><strong>Fills</strong><span>0 -&gt; 0</span></div><svg class="spark" viewBox="0 0 160 42" role="img" aria-label="sparkline"><polyline points="0,21 160,21"></polyline></svg></div><div class="spark-item"><div><strong>PnL USD</strong><span>0 -&gt; 0</span></div><svg class="spark" viewBox="0 0 160 42" role="img" aria-label="sparkline"><polyline points="0,21 160,21"></polyline></svg></div><div class="spark-item"><div><strong>Health State</strong><span>1 -&gt; 1</span></div><svg class="spark" viewBox="0 0 160 42" role="img" aria-label="sparkline"><polyline points="0,21 160,21"></polyline></svg></div></div><div class="table-wrap"><table><thead><tr><th>Label</th><th>Feed Gap</th><th>Intents</th><th>Fills</th><th>PnL</th><th>Health</th><th>Path</th></tr></thead><tbody><tr><td>Replay</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>reports/replay_research_smoke.json</td></tr><tr><td>Paper</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>reports/runner_paper_summary_smoke.json</td></tr></tbody></table></div></section>
+<section class="band"><h2>Reports</h2><div class="table-wrap"><table><thead><tr><th>Report</th><th>Status</th><th>Path</th><th>Bytes</th></tr></thead><tbody><tr><td>Replay Research</td><td><span class="pill pill-exists">exists</span></td><td><a href="reports/replay_research_smoke.json">reports/replay_research_smoke.json</a></td><td>3192</td></tr><tr><td>Demo Fill Compare</td><td><span class="pill pill-exists">exists</span></td><td><a href="reports/demo_fill_compare_smoke.json">reports/demo_fill_compare_smoke.json</a></td><td>380</td></tr><tr><td>Private Reconciliation</td><td><span class="pill pill-exists">exists</span></td><td><a href="reports/metascalp_reconcile_smoke.json">reports/metascalp_reconcile_smoke.json</a></td><td>1747</td></tr><tr><td>Private Capture Summary</td><td><span class="pill pill-exists">exists</span></td><td><a href="reports/metascalp_private_capture_store_smoke.json">reports/metascalp_private_capture_store_smoke.json</a></td><td>615</td></tr></tbody></table></div></section>
 <section class="band"><h2>Safety</h2><div class="table-wrap"><table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody><tr><td>live_trading_enabled</td><td><code>False</code></td></tr><tr><td>orders_cancelled</td><td><code>False</code></td></tr><tr><td>orders_submitted</td><td><code>False</code></td></tr><tr><td>secrets_read</td><td><code>False</code></td></tr></tbody></table></div></section>
-<section class="band"><h2>Progress</h2><div class="table-wrap"><table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody><tr><td>current_goal</td><td><code>Close remaining small operational and backend tasks while keeping execution guarded</code></td></tr><tr><td>do_not_repeat</td><td><code>[&quot;Do not store secrets in repo files&quot;,&quot;Do not put LLMs in live signal or execution paths&quot;,&quot;Do not trust Binance as leader without dynamic validation&quot;,&quot;Do not execute orders from market-data collectors&quot;]</code></td></tr><tr><td>last_completed_milestone</td><td><code>Closed three read-only operational tasks: CI workflow, manual dashboard refresh, and local-only dashboard server</code></td></tr><tr><td>next_required_step</td><td><code>Continue remaining backend tasks: z-score mean-reversion/adverse-move exits, MEXC spot protobuf parsing, or top-N live universe rotation</code></td></tr></tbody></table></div></section>
+<section class="band"><h2>Progress</h2><div class="table-wrap"><table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody><tr><td>current_goal</td><td><code>Continue remaining backend tasks while keeping execution guarded</code></td></tr><tr><td>do_not_repeat</td><td><code>[&quot;Do not store secrets in repo files&quot;,&quot;Do not put LLMs in live signal or execution paths&quot;,&quot;Do not trust Binance as leader without dynamic validation&quot;,&quot;Do not execute orders from market-data collectors&quot;]</code></td></tr><tr><td>last_completed_milestone</td><td><code>Added offline per-symbol lead-lag estimation and top-symbol research ranking</code></td></tr><tr><td>next_required_step</td><td><code>Continue remaining tasks: replay one saved trading day from Parquet/DuckDB, add operator UI historical sparklines, add UI smoke screenshots, or revisit spot/perp profile completion status</code></td></tr></tbody></table></div></section>
 </main>
 </body>
 </html>

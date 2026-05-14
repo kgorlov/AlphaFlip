@@ -30,6 +30,12 @@ def main() -> None:
         default=[],
         help="Additional report link as Label=path. Can be repeated.",
     )
+    parser.add_argument(
+        "--history-report",
+        action="append",
+        default=[],
+        help="Historical local report as Label=path. Can be repeated.",
+    )
     parser.add_argument("--out", default="reports/dashboard.html")
     args = parser.parse_args()
 
@@ -38,6 +44,7 @@ def main() -> None:
         runner_summary_path=args.runner_summary,
         memory_path=args.memory,
         report_paths={**DEFAULT_REPORTS, **_parse_report_links(args.report_link)},
+        history_paths=_parse_report_links(args.history_report),
     )
     write_dashboard(args.out, artifacts)
     payload = {

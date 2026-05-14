@@ -5,11 +5,13 @@ from unittest import TestCase
 
 from llbot.monitoring.dashboard import (
     DashboardArtifacts,
+    DashboardHistoryPoint,
     DashboardReportLink,
     load_dashboard_artifacts,
     render_dashboard,
     write_dashboard,
 )
+from decimal import Decimal
 
 
 class DashboardTests(TestCase):
@@ -78,6 +80,26 @@ class DashboardTests(TestCase):
                         exists=False,
                     ),
                 ),
+                history=(
+                    DashboardHistoryPoint(
+                        label="Run 1",
+                        path="reports/run1.json",
+                        feed_max_gap_ms=Decimal("10"),
+                        intents=Decimal("1"),
+                        fills=Decimal("1"),
+                        pnl_usd=Decimal("0.5"),
+                        health_state=Decimal("1"),
+                    ),
+                    DashboardHistoryPoint(
+                        label="Run 2",
+                        path="reports/run2.json",
+                        feed_max_gap_ms=Decimal("30"),
+                        intents=Decimal("3"),
+                        fills=Decimal("2"),
+                        pnl_usd=Decimal("1.5"),
+                        health_state=Decimal("0.5"),
+                    ),
+                ),
             )
         )
 
@@ -87,6 +109,10 @@ class DashboardTests(TestCase):
         self.assertIn("binance:BTCUSDT", html)
         self.assertIn("mexc:BTC_USDT", html)
         self.assertIn("Replay Research", html)
+        self.assertIn("Historical Sparklines", html)
+        self.assertIn("Feed Max Gap Ms", html)
+        self.assertIn("<svg", html)
+        self.assertIn("Run 2", html)
         self.assertIn('href="reports/replay_research_smoke.json"', html)
         self.assertIn("Missing Report", html)
         self.assertIn("missing", html)
@@ -110,15 +136,29 @@ class DashboardTests(TestCase):
             health = Path(tmp) / "health.json"
             runner = Path(tmp) / "runner.json"
             memory = Path(tmp) / "memory.json"
+            history = Path(tmp) / "history.json"
             health.write_text(json.dumps({"system": {"status": "ok"}}), encoding="utf-8")
             runner.write_text(json.dumps({"paper_summary": {"quotes": 1}}), encoding="utf-8")
             memory.write_text(json.dumps({"codex_progress": {}}), encoding="utf-8")
+            history.write_text(
+                json.dumps(
+                    {
+                        "summary": {"intents": 2, "fills": 1, "realized_pnl_usd": "1.25"},
+                        "feed_health": {
+                            "streams": {"binance:BTCUSDT": {"max_gap_ms": 42}},
+                            "decision": {"reason": "ok"},
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
 
             artifacts = load_dashboard_artifacts(
                 health_path=health,
                 runner_summary_path=runner,
                 memory_path=memory,
                 report_paths={"Replay <Research>": runner, "Missing": Path(tmp) / "missing.json"},
+                history_paths={"Run": history, "Missing History": Path(tmp) / "missing-history.json"},
             )
 
         self.assertEqual(artifacts.health["system"]["status"], "ok")
@@ -126,6 +166,9 @@ class DashboardTests(TestCase):
         self.assertEqual(artifacts.reports[0].label, "Replay <Research>")
         self.assertTrue(artifacts.reports[0].exists)
         self.assertFalse(artifacts.reports[1].exists)
+        self.assertEqual(len(artifacts.history), 1)
+        self.assertEqual(artifacts.history[0].feed_max_gap_ms, Decimal("42"))
+        self.assertEqual(artifacts.history[0].pnl_usd, Decimal("1.25"))
 
     def test_report_labels_and_paths_are_escaped(self) -> None:
         html = render_dashboard(

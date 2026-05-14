@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "updated_at_utc": "2026-05-13T17:44:00Z",
+  "updated_at_utc": "2026-05-14T19:20:00Z",
   "strategy_instance_id": "binance_mexc_leadlag_v1",
   "account_namespace": {
     "binance_uid": "unknown",
@@ -37,9 +37,9 @@
   "open_orders": [],
   "recent_errors": [],
   "codex_progress": {
-    "current_goal": "Continue remaining backend tasks while keeping repository settings and documentation current",
-    "last_completed_milestone": "Published docs/wiki pages to GitHub Wiki after the first wiki page initialized AlphaFlip.wiki.git",
-    "next_required_step": "Continue backend tasks: z-score mean-reversion/adverse-move exits, MEXC spot protobuf parsing, or top-N live universe rotation",
+    "current_goal": "Keep backend profile support guarded and prepare only data-backed research next steps",
+    "last_completed_milestone": "Finalized explicit spot/perp profile support and ML research guardrails",
+    "next_required_step": "Use only offline reports and clean saved data for any future research experiments; keep live execution disabled by default",
     "do_not_repeat": [
       "Do not store secrets in repo files",
       "Do not put LLMs in live signal or execution paths",

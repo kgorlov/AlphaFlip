@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field, replace
 from decimal import Decimal
+from math import log
 from typing import Iterable
 
 from llbot.domain.enums import IntentType, RuntimeMode, Side, Venue
@@ -81,6 +82,13 @@ class ReplayAuditRecord:
     gross_pnl_usd: Decimal | None = None
     cost_usd: Decimal | None = None
     realized_pnl_usd: Decimal | None = None
+    rolling_basis_bps: Decimal | None = None
+    z_score: Decimal | None = None
+    impulse_bps: Decimal | None = None
+    lag_bps: Decimal | None = None
+    fee_bps: Decimal | None = None
+    slippage_bps: Decimal | None = None
+    safety_bps: Decimal | None = None
     features: dict[str, object] = field(default_factory=dict)
 
 
@@ -96,6 +104,7 @@ class PaperPosition:
     entry_ts_ms: int
     expires_ts_ms: int
     model: str
+    entry_features: dict[str, object] = field(default_factory=dict)
 
 
 def replay_events(
@@ -499,6 +508,13 @@ def _audit_record(
         gross_pnl_usd=None,
         cost_usd=None,
         realized_pnl_usd=None,
+        rolling_basis_bps=_feature_decimal(intent.features, "basis_bps"),
+        z_score=_feature_decimal(intent.features, "z_score"),
+        impulse_bps=_feature_decimal(intent.features, "leader_impulse_bps"),
+        lag_bps=_feature_decimal(intent.features, "lag_bps"),
+        fee_bps=_feature_decimal(intent.features, "fee_bps"),
+        slippage_bps=_feature_decimal(intent.features, "slippage_bps"),
+        safety_bps=_feature_decimal(intent.features, "safety_bps"),
         binance_quote=_quote_snapshot(latest_quotes.get((Venue.BINANCE, _leader_symbol(intent)))),
         mexc_quote=_quote_snapshot(latest_quotes.get((Venue.MEXC, execution_symbol))),
         order_request={
@@ -589,6 +605,7 @@ def _position_from_fill(intent: Intent, execution_symbol: str, fill: PaperFill) 
         entry_ts_ms=intent.created_ts_ms,
         expires_ts_ms=intent.created_ts_ms + intent.ttl_ms,
         model=str(intent.features.get("model", "unknown")),
+        entry_features=dict(intent.features),
     )
 
 
@@ -607,7 +624,7 @@ def _close_positions(
     remaining: list[PaperPosition] = []
     next_state = state
     for position in positions:
-        exit_reason = _exit_reason(position, quote, take_profit_bps)
+        exit_reason = _exit_reason(position, quote, latest_quotes, take_profit_bps)
         if exit_reason is None:
             remaining.append(position)
             continue
@@ -767,10 +784,18 @@ def _exit_audit_record(
         gross_pnl_usd=gross_pnl,
         cost_usd=cost,
         realized_pnl_usd=realized_pnl,
+        rolling_basis_bps=_feature_decimal(position.entry_features, "basis_bps"),
+        z_score=_feature_decimal(position.entry_features, "z_score"),
+        impulse_bps=_feature_decimal(position.entry_features, "leader_impulse_bps"),
+        lag_bps=_feature_decimal(position.entry_features, "lag_bps"),
+        fee_bps=fee_bps,
+        slippage_bps=slippage_bps,
+        safety_bps=_feature_decimal(position.entry_features, "safety_bps"),
         features={
             "entry_price": position.entry_price,
             "entry_ts_ms": position.entry_ts_ms,
             "expires_ts_ms": position.expires_ts_ms,
+            "entry_features": dict(position.entry_features),
         },
     )
 
@@ -778,8 +803,13 @@ def _exit_audit_record(
 def _exit_reason(
     position: PaperPosition,
     quote: Quote,
+    latest_quotes: dict[tuple[Venue, str], Quote],
     take_profit_bps: Decimal | None,
 ) -> str | None:
+    residual_reason = _residual_zscore_exit_reason(position, quote, latest_quotes)
+    if residual_reason is not None:
+        return residual_reason
+
     if take_profit_bps is not None:
         gross_pnl, _, _ = _pnl_values(
             position,
@@ -794,6 +824,57 @@ def _exit_reason(
         return "ttl_exit"
 
     return None
+
+
+def _residual_zscore_exit_reason(
+    position: PaperPosition,
+    quote: Quote,
+    latest_quotes: dict[tuple[Venue, str], Quote],
+) -> str | None:
+    if position.model != "residual_zscore":
+        return None
+
+    features = position.entry_features
+    leader_symbol = str(features.get("leader_symbol", position.symbol))
+    leader = latest_quotes.get((Venue.BINANCE, leader_symbol))
+    if leader is None:
+        return None
+
+    mean_bps = _feature_decimal(features, "basis_ewm_mean_bps", "basis_mean_bps")
+    std_bps = _feature_decimal(features, "basis_ewm_std_bps")
+    if mean_bps is None or std_bps is None or std_bps <= 0:
+        return None
+
+    beta = _feature_decimal(features, "beta") or Decimal("1")
+    z_exit = _feature_decimal(features, "z_exit") or Decimal("0.4")
+    adverse_z_stop = _feature_decimal(features, "adverse_z_stop") or Decimal("4")
+    current_z = (_basis_bps_value(leader, quote, beta) - mean_bps) / std_bps
+
+    if position.side == Side.BUY:
+        if current_z >= -z_exit:
+            return "zscore_mean_reversion"
+        if current_z <= -adverse_z_stop:
+            return "adverse_move_stop"
+    else:
+        if current_z <= z_exit:
+            return "zscore_mean_reversion"
+        if current_z >= adverse_z_stop:
+            return "adverse_move_stop"
+    return None
+
+
+def _feature_decimal(features: dict[str, object], *keys: str) -> Decimal | None:
+    for key in keys:
+        value = features.get(key)
+        if value is not None:
+            return Decimal(str(value))
+    return None
+
+
+def _basis_bps_value(leader: Quote, lagger: Quote, beta: Decimal) -> Decimal:
+    log_lagger = Decimal(str(log(float(lagger.mid))))
+    log_leader = Decimal(str(log(float(leader.mid))))
+    return Decimal("10000") * (log_lagger - beta * log_leader)
 
 
 def _is_reversal(position: PaperPosition, intent: Intent) -> bool:

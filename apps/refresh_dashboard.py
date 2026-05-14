@@ -35,6 +35,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         help="Additional dashboard report link as Label=path. Can be repeated.",
     )
+    parser.add_argument(
+        "--history-report",
+        action="append",
+        default=[],
+        help="Historical dashboard report as Label=path. Can be repeated.",
+    )
     return parser
 
 
@@ -87,6 +93,8 @@ def refresh_commands(args: argparse.Namespace) -> list[list[str]]:
     ]
     for report_link in args.report_link:
         dashboard_cmd.extend(["--report-link", report_link])
+    for history_report in args.history_report:
+        dashboard_cmd.extend(["--history-report", history_report])
 
     return [health_cmd, dashboard_cmd]
 

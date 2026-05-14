@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from llbot.adapters.metascalp import MetaScalpConnection, MetaScalpInstance
-from llbot.domain.models import PortfolioState
+from llbot.domain.models import PortfolioState, SymbolProfile
 
 
 HEALTH_OK = "ok"
@@ -112,6 +112,31 @@ def evaluate_feed_health(
         return FeedHealthDecision(False, "stale_stream", stale_streams=stale)
 
     return FeedHealthDecision(True, "ok")
+
+
+def required_profile_streams(profile: SymbolProfile) -> tuple[str, str]:
+    """Return required venue/symbol feed keys for one strategy profile."""
+
+    return (
+        feed_stream_key(profile.leader_venue.value, profile.leader_symbol),
+        feed_stream_key(profile.lagger_venue.value, profile.lagger_symbol),
+    )
+
+
+def evaluate_profile_feed_health(
+    streams: dict[str, FeedStreamState],
+    profile: SymbolProfile,
+    now_ts_ms: int,
+    stale_after_ms: int,
+) -> FeedHealthDecision:
+    """Evaluate per-symbol, per-venue freshness for a strategy profile."""
+
+    return evaluate_feed_health(
+        streams,
+        required_profile_streams(profile),
+        now_ts_ms,
+        stale_after_ms,
+    )
 
 
 def feed_health_metadata(decision: FeedHealthDecision) -> dict[str, object]:

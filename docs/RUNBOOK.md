@@ -85,6 +85,14 @@ Export replay JSONL market data to Parquet:
 
 This is an offline conversion from local public replay files. It does not contact exchanges or MetaScalp.
 
+Replay one saved trading day from Parquet or DuckDB:
+
+```powershell
+.\.venv\Scripts\python.exe apps\replay_day.py --day 2026-05-13 --parquet reports\replay_smoke.parquet --min-samples 1 --fee-bps 5 --slippage-bps 5 --take-profit-bps 10 --stale-feed-ms 1500 --out reports\replay_day_smoke.json --audit-out reports\replay_day_audit_smoke.jsonl --research-out reports\replay_day_research_smoke.json
+```
+
+The day replay command is offline-only. It reads local Parquet and/or DuckDB market tables, filters events by `captured_at_utc` day, runs the shared paper engine, and writes summary/audit/research artifacts. It does not contact exchanges or MetaScalp, submit/cancel orders, read secrets, or enable live trading.
+
 Build a daily summary report from existing local artifacts:
 
 ```powershell

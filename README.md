@@ -137,4 +137,4 @@ Implemented areas include:
 - MetaScalp discovery, guarded demo order/cancel paths, private update capture, and offline reconciliation.
 - DuckDB storage, health checks, alert records, daily summaries, and static dashboard generation.
 
-Notable remaining work is tracked in [TASKS.md](TASKS.md), including MEXC spot protobuf parsing, top-N live universe rotation, additional exit logic, and broader day-level replay comparisons.
+Notable remaining work is tracked in [TASKS.md](TASKS.md), including top-N live universe rotation, broader day-level replay comparisons, research regime metrics, and operator UI smoke screenshots.

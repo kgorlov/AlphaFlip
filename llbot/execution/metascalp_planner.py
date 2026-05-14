@@ -9,7 +9,7 @@ from decimal import Decimal
 from typing import Any
 
 from llbot.adapters.metascalp import MetaScalpConnection
-from llbot.domain.enums import IntentType, OrderStyle, Side
+from llbot.domain.enums import IntentType, MarketType, OrderStyle, Side
 from llbot.domain.models import Intent, SymbolProfile
 
 
@@ -100,7 +100,7 @@ def build_metascalp_dry_run_order_plan(
         "ClientId": client_id,
         "TimeInForce": "GTC",
         "TtlMs": intent.ttl_ms,
-        "ReduceOnly": _is_exit(intent),
+        "ReduceOnly": _reduce_only_supported(intent, profile),
         "Comment": f"leadlag:{intent.intent_id}",
     }
     return MetaScalpDryRunOrderPlan(
@@ -144,7 +144,11 @@ def dry_run_order_audit_record(
         client_id_returned=None,
         execution_time_ms=None,
         unknown_status=False,
-        metadata={"validation_reason": plan.validation.reason},
+        metadata={
+            "validation_reason": plan.validation.reason,
+            "reduce_only": bool(plan.payload.get("ReduceOnly")),
+            "order_style": intent.order_style.value,
+        },
     )
 
 
@@ -210,6 +214,17 @@ def _metascalp_order_type(order_style: OrderStyle) -> str:
 
 def _is_exit(intent: Intent) -> bool:
     return intent.intent_type in {IntentType.EXIT_LONG, IntentType.EXIT_SHORT}
+
+
+def _reduce_only_supported(intent: Intent, profile: SymbolProfile | None) -> bool:
+    if not _is_exit(intent):
+        return False
+    if profile is None:
+        return True
+    configured = profile.metadata.get("reduce_only_supported")
+    if configured is not None:
+        return bool(configured)
+    return profile.lagger_market == MarketType.USDT_PERP
 
 
 def _notional_usd(intent: Intent, profile: SymbolProfile) -> Decimal:

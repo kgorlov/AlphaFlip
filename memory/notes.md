@@ -339,3 +339,96 @@
 - Added `apps/serve_dashboard.py` to serve the static dashboard only on local hosts: `127.0.0.1`, `localhost`, or `::1`.
 - Decision: refresh and serve workflows are read-only operational helpers; they do not submit/cancel orders, read secrets, open market-data sockets, or enable live trading.
 - Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 163 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-13 Residual Paper Exit Milestone
+
+- Replay/paper positions now retain entry signal features, allowing residual z-score exits to evaluate against the entry EWM baseline.
+- Added residual paper exits for z-score mean reversion before TTL and adverse z-score extension before TTL.
+- Exit audit records keep the existing reduce-only paper exit request and include the entry residual features for diagnosis.
+- Decision: this is paper/replay-only exit logic and does not change MetaScalp submit/cancel behavior or enable live trading.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 166 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-13 Backend Hardening Batch
+
+- Added deterministic top-N live universe planning in `llbot.universe.rotator`, including selected profiles, Binance stream names, MEXC ticker subscription messages, and rotation deltas.
+- Rotation planning enforces `max_active_symbols` and computes keep/subscribe/unsubscribe sets without opening WebSockets.
+- Added `required_profile_streams` and `evaluate_profile_feed_health` for per-symbol, per-venue stale/missing feed checks from `SymbolProfile`.
+- Paper/replay audit records now expose top-level basis, z-score, impulse, lag, fee, slippage, and safety fields while retaining quote snapshots, fills, exits, and PnL fields.
+- Decision: this batch is planning, monitoring, and audit only; it does not add a network runner, submit/cancel orders, or enable live trading.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 169 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-13 Execution Safety Batch
+
+- Added edge-gated order style planning: passive/maker limits require the maker edge threshold, aggressive/taker limits require the taker threshold, and lower edge is rejected.
+- MetaScalp dry-run plans now set reduce-only only for exit intents on supported execution profiles, defaulting to USDT perpetual or explicit profile metadata.
+- Added direct MEXC execution policy gates: v1 remains MetaScalp-only, and any later direct private adapter must require `newClientOrderId`/`externalOid`, signed REST, IP whitelist, scoped keys, pre-trade validation metadata, and official endpoints only.
+- Decision: this is planner/policy logic only; no real order submission path or live trading behavior was added.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 176 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 MEXC Spot Protobuf Parser Milestone
+
+- Added `llbot.adapters.mexc_spot_ws` with documented MEXC spot v3 public WebSocket URL, ping, and subscription builders for aggregated book ticker, aggregated depth, and limit depth.
+- Implemented a small isolated protobuf reader for public wrapper/bookTicker/depth frames so production code does not import reference repositories or generated private schemas.
+- MEXC spot protobuf frames now normalize into `BookTicker` and `OrderBookDepth` with spot market metadata, send/create timestamps, and local receive timestamps.
+- Decision: parser scope is public market data only; private MEXC streams and direct MEXC execution remain out of the v1 production path.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 180 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 Replay Vs Paper PnL Comparison Milestone
+
+- Added `llbot.service.paper_pnl_compare` to compare saved replay and paper summary artifacts by PnL, counts, and per-model intent counts.
+- Added `apps/compare_replay_paper_pnl.py`, an offline-only CLI that writes a JSON comparison report and includes explicit no-submit/no-cancel/no-live safety flags.
+- Smoke comparison of `reports/replay_paper_summary_smoke.json` and `reports/runner_paper_summary_smoke.json` matched with zero PnL/count deltas and wrote `reports/replay_paper_pnl_compare_smoke.json`.
+- Decision: replay-vs-paper comparison is artifact-only; it does not capture market data, contact MetaScalp, submit/cancel orders, or enable live trading.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 185 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 Replay Research Metrics Milestone
+
+- Added `research_metrics` to replay research reports with catch-up duration distribution, false-positive rate, slippage-by-hour, and performance-by-volatility-regime sections.
+- Catch-up is counted from profitable `take_profit` or `zscore_mean_reversion` exits with duration measured from entry timestamp to exit timestamp.
+- False positives are closed paper trades with non-positive realized PnL.
+- Volatility regimes are derived from absolute impulse bps: low `<5`, medium `<20`, high `>=20`, with `unknown` fallback.
+- Decision: these are offline research metrics derived from replay audit records only; no market-data capture, MetaScalp call, order action, model training, or live trading change was added.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 186 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 Symbol Lead-Lag Selection Milestone
+
+- Added `symbol_selection` to replay research reports, using existing midpoint leadership scoring to estimate per-symbol leader, lagger, lag milliseconds, and stability reason.
+- Candidate ranking now combines lag stability, MEXC bookTicker top-of-book liquidity proxy, MEXC spread proxy, and replay-paper realized PnL.
+- Symbols without enough paired quote samples are retained in the report with explicit rejection reasons such as `insufficient_samples`.
+- Decision: this is an offline research ranking only; it does not change runtime universe rotation, capture market data, call MetaScalp, submit/cancel orders, or enable live trading.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 187 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 Dashboard Historical Sparklines Milestone
+
+- Added read-only dashboard history loading from repeated local `--history-report Label=path` JSON files.
+- Dashboard now renders SVG sparklines for feed max gap, intents, fills, PnL, and health state using stored report artifacts.
+- `apps/refresh_dashboard.py` forwards `--history-report` arguments to the dashboard builder.
+- Decision: sparklines are local artifact visualization only; no browser automation, market-data capture, MetaScalp call, order action, secret input, or live trading change was added.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 187 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 Dashboard Screenshot Smoke Milestone
+
+- Added `apps/dashboard_screenshot_smoke.py` to capture desktop and mobile screenshots of the static dashboard with an installed headless Chrome/Edge executable.
+- Screenshot smoke validates PNG signatures and dimensions, then writes `reports/dashboard_screenshot_smoke.json` with read-only no-submit/no-cancel/no-secrets/no-live flags.
+- Real local smoke used Chrome and wrote `reports/dashboard_desktop_smoke.png` and `reports/dashboard_mobile_smoke.png`.
+- Decision: screenshot smoke opens only the static local dashboard HTML through `file://`; it does not start a server, capture market data, call MetaScalp, submit/cancel orders, read secrets, or enable live trading.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 191 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 Saved Day Replay From Parquet/DuckDB Milestone
+
+- Added Parquet replay row round-trip back to `ReplayEvent` objects.
+- Added DuckDB market event loading by source and captured day.
+- Added `llbot.service.day_replay` and `apps/replay_day.py` to replay one saved trading day from local Parquet and/or DuckDB artifacts through the shared paper runner.
+- Smoke day replay wrote `reports/replay_day_smoke.json`, `reports/replay_day_audit_smoke.jsonl`, and `reports/replay_day_research_smoke.json`.
+- Decision: day replay is offline artifact analysis only; it does not capture market data, call MetaScalp, submit/cancel orders, read secrets, or enable live trading.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 196 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 Market Profile Support Wrap-Up
+
+- Closed explicit `spot_to_spot` and `perp_to_perp` support tasks in `TASKS.md`.
+- Added provider coverage for Binance spot -> MEXC spot profile construction, including spot market metadata, tick/min-size fields, and no contract size.
+- Kept existing provider coverage for Binance USD-M -> MEXC contract profile construction.
+- Updated live universe rotation so MEXC spot subscriptions use the shared public protobuf aggregated bookTicker helper instead of an inline channel string.
+- Added a research policy gate: simple `trade/skip` classifiers require clean tick/orderbook data, enough samples, and a proven rule-based baseline; neural-network training also requires explicit approval.
+- Decision: profile support is still planning/market-data/execution-planner guarded; research ML remains offline-gated; this does not submit or cancel MetaScalp orders, read secrets, or enable live trading.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 202 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
