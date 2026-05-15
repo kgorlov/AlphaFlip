@@ -18,6 +18,7 @@ local/
 # Runtime data
 data/
 logs/*.jsonl
+reports/operator_console_*.log
 *.duckdb
 *.duckdb.wal
 *.parquet

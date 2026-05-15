@@ -240,6 +240,7 @@ async def run_quote_paper(
     risk_config: RiskConfig | None = None,
     portfolio_state: PortfolioState | None = None,
     max_quotes: int | None = None,
+    max_closed_positions: int | None = None,
     audit_sink: Callable[[ReplayAuditRecord], None] | None = None,
 ) -> tuple[ReplayPaperSummary, list[ReplayAuditRecord]]:
     """Run internal paper trading over a live-like async quote stream."""
@@ -250,6 +251,7 @@ async def run_quote_paper(
         risk_config,
         portfolio_state,
         max_quotes,
+        max_closed_positions,
         audit_sink,
     )
     return result.summary, result.audit_records
@@ -261,12 +263,17 @@ async def run_quote_paper_result(
     risk_config: RiskConfig | None = None,
     portfolio_state: PortfolioState | None = None,
     max_quotes: int | None = None,
+    max_closed_positions: int | None = None,
     audit_sink: Callable[[ReplayAuditRecord], None] | None = None,
+    summary_sink: Callable[[ReplayPaperSummary], None] | None = None,
+    summary_interval_quotes: int = 100,
 ) -> PaperRunResult:
     """Run paper trading over async quotes and return summary, audit, and health."""
 
     engine = build_paper_trading_engine(config, risk_config, portfolio_state)
-    if max_quotes is not None and max_quotes <= 0:
+    if (max_quotes is not None and max_quotes <= 0) or (
+        max_closed_positions is not None and max_closed_positions <= 0
+    ):
         return PaperRunResult(
             engine.summary(),
             engine.audit_records_snapshot(),
@@ -278,7 +285,15 @@ async def run_quote_paper_result(
         if audit_sink is not None:
             for record in records:
                 audit_sink(record)
+        if summary_sink is not None and _should_emit_summary(
+            engine.quote_count,
+            records,
+            summary_interval_quotes,
+        ):
+            summary_sink(engine.summary())
         if max_quotes is not None and engine.quote_count >= max_quotes:
+            break
+        if max_closed_positions is not None and engine.closed_positions >= max_closed_positions:
             break
 
     return PaperRunResult(
@@ -286,3 +301,15 @@ async def run_quote_paper_result(
         engine.audit_records_snapshot(),
         build_paper_health_report(engine, config),
     )
+
+
+def _should_emit_summary(
+    quote_count: int,
+    records: list[ReplayAuditRecord],
+    interval_quotes: int,
+) -> bool:
+    if records:
+        return True
+    if interval_quotes <= 0:
+        return False
+    return quote_count > 0 and quote_count % interval_quotes == 0

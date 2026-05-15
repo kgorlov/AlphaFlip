@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "updated_at_utc": "2026-05-14T19:31:00Z",
+  "updated_at_utc": "2026-05-15T14:15:00Z",
   "strategy_instance_id": "binance_mexc_leadlag_v1",
   "account_namespace": {
     "binance_uid": "unknown",
@@ -37,9 +37,9 @@
   "open_orders": [],
   "recent_errors": [],
   "codex_progress": {
-    "current_goal": "Keep backend profile support guarded and prepare only data-backed research next steps",
-    "last_completed_milestone": "Ran MetaScalp DemoMode manual submit smoke and aligned order payload schema",
-    "next_required_step": "Inspect MetaScalp demo order/fill state for clientId a6757b56-8d73-49dc-824f-d499900b; keep live execution disabled by default",
+    "current_goal": "Run cost-aware non-BTC Live Paper research after rejecting current BTC setup",
+    "last_completed_milestone": "Concluded current BTCUSDT gross-positive paper sample is not economically tradable after realistic costs",
+    "next_required_step": "Run ranked non-BTC candidates such as SOLUSDT/XRPUSDT/DOGEUSDT/SUIUSDT with non-zero fee_bps and slippage_bps, then compare cost-adjusted PnL and feed-health",
     "do_not_repeat": [
       "Do not store secrets in repo files",
       "Do not put LLMs in live signal or execution paths",

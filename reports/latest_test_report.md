@@ -2610,3 +2610,555 @@ Coverage added:
 - MetaScalp order payload now matches the observed local API schema: `ticker`, `side`, `price`, `size`, `clientId`, and `comment`.
 - Demo submission remains guarded by `--submit-demo --confirm-demo-submit METASCALP_DEMO_ORDER` and connected `DemoMode=true` discovery.
 - Live trading remains disabled.
+
+## 2026-05-14 Local Operator Console Milestone
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_operator_console
+```
+
+Result:
+
+```text
+Ran 5 tests in 0.004s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 207 tests in 1.176s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Coverage added:
+
+- `apps\operator_console.py` local-only HTTP UI for workflow buttons, jobs, reports, and recent audit rows.
+- Safe buttons for MetaScalp probe, health check, dashboard refresh, replay paper smoke, live public paper, and MetaScalp demo dry-run.
+- One tiny MetaScalp DemoMode submit action remains behind `METASCALP_DEMO_ORDER` confirmation.
+- No live-trading control, secret input, or direct private MEXC execution is exposed.
+
+## 2026-05-14 Operator Console Live Paper Length Update
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_operator_console
+```
+
+Result:
+
+```text
+Ran 6 tests in 0.004s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 208 tests in 2.116s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Change:
+
+- Operator console live public paper action now runs `--events 30000` and is labeled `Live Paper 30000`.
+
+## 2026-05-14 Operator Console Live Paper Controls
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_operator_console
+```
+
+Result:
+
+```text
+Ran 8 tests in 0.007s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 210 tests in 1.050s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Change:
+
+- Operator console now has a dedicated Live Paper form for `events`, `qty`, `stale-feed-ms`, `z-entry`, and `min-impulse-bps`.
+- The default Live Paper form uses `events=30000`, `qty=0.001`, `stale-feed-ms=3000`, `z-entry=1.5`, and `min-impulse-bps=1`.
+- Recent signal/order rows now prefer `reports/operator_live_paper_audit.jsonl` before older manual demo audit artifacts.
+
+## 2026-05-14 Operator Console PnL Visibility
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_operator_console
+```
+
+Result:
+
+```text
+Ran 11 tests in 0.012s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 213 tests in 1.180s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Change:
+
+- Operator console paper summary now exposes `total_pnl_usd` as realized plus unrealized paper PnL.
+- Recent signal/order rows now expose a `success` field: `yes` for closed profitable paper trades, `no` for closed non-profitable trades, `open` for filled entries, and explicit blocked/not-filled states otherwise.
+- Trades table now renders Success, Result, PnL USD, Fill, and Exit columns so profitable and failed paper trades can be inspected directly in the browser.
+
+## 2026-05-14 Live Paper WebSocket Timeout Resilience
+
+Targeted commands:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_paper_runner
+.\.venv\Scripts\python.exe -m unittest tests.test_operator_console
+```
+
+Result:
+
+```text
+Ran 8 tests in 0.024s
+OK
+
+Ran 11 tests in 0.014s
+OK
+```
+
+CLI smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\runner_paper.py --live-ws --events 0 --min-samples 1 --summary-out reports\runner_paper_live_ws_summary_smoke.json --audit-out reports\runner_paper_live_ws_audit_smoke.jsonl --health-out reports\runner_paper_live_ws_health_smoke.json
+```
+
+Result:
+
+```text
+{"processed_events":0,"quotes":0,"intents":0,"skipped_events":0,"risk_allowed":0,"risk_blocked":0,"fills":0,"not_filled":0,"closed_positions":0,"open_positions":0,"gross_realized_pnl_usd":"0","realized_cost_usd":"0","realized_pnl_usd":"0","gross_unrealized_pnl_usd":"0","unrealized_cost_usd":"0","unrealized_pnl_usd":"0","audit_records":0,"intent_counts":{}}
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 214 tests in 1.220s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Change:
+
+- Live Paper now treats a single public WebSocket opening-handshake failure as a paper-mode warning instead of a fatal job exception.
+- The runner continues with any still-healthy stream or exits cleanly if all streams failed; missing/stale streams remain visible through the existing health report and risk gates.
+- Added async coverage for a MEXC stream open failure while Binance quotes continue.
+
+## 2026-05-14 Operator Console Win Rate Counters
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_operator_console
+```
+
+Result:
+
+```text
+Ran 11 tests in 0.011s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 214 tests in 1.260s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Change:
+
+- Operator console paper summary now shows `winning_trades`, counting closed paper trades with positive realized PnL.
+- Operator console paper summary now shows `win_rate_pct`, computed over closed paper trades only.
+- Open, blocked, and not-filled decisions are intentionally excluded from the win-rate denominator.
+
+## 2026-05-14 Operator Console Cycle PnL Percent
+
+Targeted commands:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_operator_console
+.\.venv\Scripts\python.exe -m unittest tests.test_paper_runner
+```
+
+Result:
+
+```text
+tests.test_operator_console: Ran 11 tests, OK
+tests.test_paper_runner: Ran 9 tests, OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 215 tests in 1.749s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Change:
+
+- Paper runner summaries now include `total_pnl_usd`, `starting_balance_usd`, and `pnl_pct_of_balance`.
+- Operator console Live Paper forwards configurable starting balance, defaulting to `1000`.
+- Operator console Paper profit KPIs now show Total PnL, PnL %, Balance, Wins, and Win Rate.
+- This remains reporting-only; no live trading, secret input, MetaScalp submit, signal, risk, or fill calculation behavior changed.
+
+Server restart:
+
+- Stopped old local operator-console listeners on `127.0.0.1:8770`, `8771`, and `8772`.
+- Started a fresh local operator console at `http://127.0.0.1:8770/`.
+- Verified `GET http://127.0.0.1:8770/api/state` returns safety flags with `live_trading_enabled=false`.
+
+## 2026-05-15 Operator Console Trade Target
+
+Targeted commands:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_operator_console
+.\.venv\Scripts\python.exe -m unittest tests.test_paper_runner
+```
+
+Result:
+
+```text
+tests.test_operator_console: Ran 11 tests, OK
+tests.test_paper_runner: Ran 11 tests, OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 217 tests in 1.009s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Change:
+
+- Live paper runs now accept `--target-closed-trades` and stop after that many closed paper trades.
+- Operator console Live Paper form now uses `Target closed trades` instead of user-facing `Events`.
+- The console still passes an internal `--events` safety cap so sparse-signal runs remain bounded.
+- Paper summaries now include `target_closed_trades` and `stop_reason`.
+- No live trading, secret input, MetaScalp submit/cancel, risk bypass, or signal/fill/PnL behavior changed.
+
+Server restart:
+
+- Restarted the local operator console at `http://127.0.0.1:8770/`.
+- Verified only `127.0.0.1:8770` is listening among the operator console ports `8770-8772`.
+- Verified the served HTML contains `Target closed trades` and no longer contains the old `paper-events` input id.
+- Verified `GET http://127.0.0.1:8770/api/state` returns `live_trading_enabled=false`.
+
+## 2026-05-15 Operator Console Universe Candidates
+
+Targeted commands:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_operator_console
+.\.venv\Scripts\python.exe -m unittest tests.test_hydrate_universe
+.\.venv\Scripts\python.exe -m unittest tests.test_paper_runner
+```
+
+Result:
+
+```text
+tests.test_operator_console: Ran 13 tests, OK
+tests.test_hydrate_universe: Ran 1 test, OK
+tests.test_paper_runner: Ran 11 tests, OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 220 tests in 2.107s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Change:
+
+- `apps/hydrate_universe.py` can now write ranked candidate profiles to JSON.
+- Operator console has a `Refresh Universe` action that writes `reports/operator_universe_candidates.json`.
+- Operator console displays ranked universe candidates and can fill Live Paper symbol fields from a selected row.
+- Live Paper now accepts selected `symbol`, `leader_symbol`, and `lagger_symbol` from the UI instead of always using BTC.
+- BTC remains only a default fallback when no candidate is selected.
+- No live trading, secret input, MetaScalp submit/cancel, risk bypass, or signal/fill/PnL behavior changed.
+
+Live universe hydration smoke:
+
+```text
+.\.venv\Scripts\python.exe apps\hydrate_universe.py --config conf/config.example.yaml --depth-limit 20 --http-timeout-sec 20 --out reports\operator_universe_candidates.json
+```
+
+Result:
+
+```text
+Wrote 7 ranked candidates. Top rows: BTCUSDT, SOLUSDT, XRPUSDT, DOGEUSDT, SUIUSDT, AVAXUSDT, ADAUSDT.
+```
+
+Note:
+
+- Initial 5-second public REST attempts timed out on Binance/MEXC snapshots, so universe refresh now uses a 20-second timeout in the CLI/operator action.
+
+Server restart:
+
+- Restarted the local operator console at `http://127.0.0.1:8770/`.
+- Verified only `127.0.0.1:8770` is listening among the operator console ports `8770-8772`.
+- Verified `/api/state` returns the 7 ranked universe candidates and `live_trading_enabled=false`.
+
+## 2026-05-15 Live Paper WebSocket Reconnects
+
+Observed operator run:
+
+```text
+stop_reason=stream_ended
+stderr={"warning":"live_paper_websocket_failed","error":"no close frame received or sent","paper_mode_only":true}
+```
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_paper_runner
+```
+
+Result:
+
+```text
+Ran 11 tests in 0.034s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 220 tests in 1.481s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Change:
+
+- Binance USD-M and MEXC contract public WebSocket pumps now reconnect after normal network disconnects.
+- Reconnects are bounded by `--ws-max-reconnects` and delayed by `--ws-reconnect-delay-sec`.
+- Live Paper emits `live_paper_websocket_reconnect` warnings instead of ending immediately on the first public stream close.
+- Existing target closed-trade and max event caps still stop the run.
+- No live trading, secret input, MetaScalp submit/cancel, risk bypass, or signal/fill/PnL behavior changed.
+
+Server restart:
+
+- Restarted the local operator console at `http://127.0.0.1:8770/`.
+- Verified only `127.0.0.1:8770` is listening among the operator console ports `8770-8772`.
+- Verified `/api/state` returns `live_trading_enabled=false`.
+
+## 2026-05-15 Dynamic Live Paper Summary
+
+Observed UI issue:
+
+```text
+Total PnL remained at the previous final value while a Live Paper job was running.
+```
+
+Targeted command:
+
+```text
+.\.venv\Scripts\python.exe -m unittest tests.test_paper_runner
+```
+
+Result:
+
+```text
+Ran 11 tests in 0.025s
+OK
+```
+
+Full suite:
+
+```text
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Result:
+
+```text
+Ran 220 tests in 1.020s
+OK
+```
+
+Additional check:
+
+```text
+.\.venv\Scripts\python.exe -m compileall llbot apps tests
+```
+
+Result: pass.
+
+Change:
+
+- `run_quote_paper_result` now accepts a `summary_sink`.
+- Live Paper refreshes `--summary-out` during the run every `--summary-update-interval` quotes and on trade events.
+- Running snapshots use `stop_reason=running`; final completion still writes the final stop reason.
+- Dynamic snapshots include realized, unrealized, total PnL, PnL percent, selected symbols, and target closed trades.
+- No live trading, secret input, MetaScalp submit/cancel, risk bypass, or signal/fill/PnL behavior changed.
+
+Server restart:
+
+- Restarted the local operator console at `http://127.0.0.1:8770/`.
+- Verified only `127.0.0.1:8770` is listening among the operator console ports `8770-8772`.
+- Verified `/api/state` returns `live_trading_enabled=false`.

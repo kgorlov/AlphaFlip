@@ -442,3 +442,102 @@
 - Manual guarded demo submit with `qty=0.001` was accepted by MetaScalp DemoMode, returning `status=ok`, `clientId=a6757b56-8d73-49dc-824f-d499900b`, and `executionTimeMs=464.6353`.
 - Decision: this was DemoMode only, behind explicit submit confirmation and connected demo discovery; live trading remains disabled.
 - Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 202 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 Local Operator Console Milestone
+
+- Added `apps/operator_console.py`, a local-only HTTP console for safe workflow launches, job output, report links, and recent signal/order audit rows.
+- Console actions cover MetaScalp probe, health check, dashboard refresh, replay paper smoke, live public paper, MetaScalp demo dry-run, and one tiny MetaScalp DemoMode submit.
+- The tiny demo submit action requires the exact `METASCALP_DEMO_ORDER` confirmation and still uses MetaScalp DemoMode discovery.
+- Decision: the console intentionally has no live-trading control, no secret input, no direct private MEXC execution, and no risk-gate bypass.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 207 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 Operator Console Live Paper Length Update
+
+- Changed the operator console live public paper button from `Live Paper 100` to `Live Paper 30000`.
+- The action now passes `--events 30000` to `apps\runner_paper.py` so UI runs collect a more useful sample before summarizing.
+- Decision: this still uses public WebSocket paper mode only; no MetaScalp submit, no live trading, and no secret input are added.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 208 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 Operator Console Live Paper Controls
+
+- Added a dedicated Live Paper form to the operator console with configurable `events`, `qty`, `stale-feed-ms`, `z-entry`, and `min-impulse-bps`.
+- Defaults are now `events=30000`, `qty=0.001`, `stale-feed-ms=3000`, `z-entry=1.5`, and `min-impulse-bps=1` for richer research runs.
+- Recent signal/order rows now prioritize `reports/operator_live_paper_audit.jsonl` before older manual demo audit artifacts.
+- Decision: this remains public WebSocket paper mode only; no MetaScalp submit, live trading, secret input, or risk-gate bypass is added.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 210 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 Operator Console PnL Visibility
+
+- Added `total_pnl_usd` to the operator console paper summary, computed from realized plus unrealized paper PnL.
+- Added per-row `success` status to recent audit rows: profitable closed trades are `yes`, non-profitable closed trades are `no`, filled entries are `open`, and blocked/not-filled decisions stay explicit.
+- Trades table now shows Success, Result, PnL USD, Fill, and Exit columns so the operator can see whether a paper trade made money and why it closed.
+- Decision: this is UI/audit visibility only; it does not change signal generation, risk gates, MetaScalp submission, secret handling, or live trading defaults.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 213 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 Live Paper WebSocket Timeout Resilience
+
+- Live Paper no longer fails the whole job solely because one public WebSocket stream times out during opening handshake.
+- The runner writes a structured `live_paper_websocket_failed` warning to stderr, continues with any remaining healthy stream, or exits cleanly if all streams failed.
+- Existing feed-health output remains the source of truth for missing/stale Binance or MEXC streams before trusting any paper PnL.
+- Decision: this is runner resilience for public market-data paper mode only; it does not change signal rules, risk gates, MetaScalp submission, secret handling, or live trading defaults.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 214 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 Operator Console Win Rate Counters
+
+- Added `winning_trades` to the operator console paper summary, counting closed paper trades with positive realized PnL.
+- Added `win_rate_pct`, computed as winning closed trades divided by closed paper trades.
+- Open entries, blocked decisions, and not-filled decisions are excluded from win-rate calculation.
+- Decision: this is UI/audit aggregation only; it does not change signal generation, risk gates, fill simulation, PnL calculation, MetaScalp submission, or live trading defaults.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 214 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-14 Operator Console Cycle PnL Percent
+
+- Added `--starting-balance-usd` to the safe paper runner for reporting-only cycle return calculations.
+- Live Paper console runs now pass a configurable starting balance, defaulting to `1000`.
+- Operator paper KPIs now show total cycle PnL, starting balance, and PnL percent of balance alongside wins and win rate.
+- Decision: balance percentage is report-only and does not affect signals, risk gates, fill simulation, MetaScalp submission, secret handling, or live trading defaults.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 215 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-15 Operator Console Trade Target
+
+- Added `--target-closed-trades` to live paper quote runs so a cycle can stop after a requested number of closed paper trades.
+- The operator Live Paper form now asks for `Target closed trades` instead of exposing raw quote-event count.
+- The console still passes an internal `--events` safety cap, computed from the target, so runs cannot hang forever when signals are sparse.
+- Paper summaries now include `target_closed_trades` and `stop_reason` for cycle diagnosis.
+- Decision: this changes only paper-run control and UI; it does not submit/cancel orders, enable live trading, read secrets, bypass risk, or change signal/fill/PnL logic.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 217 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-15 Operator Console Universe Candidates
+
+- Added JSON output support to `apps/hydrate_universe.py`, writing ranked Binance/MEXC candidate profiles with safety flags.
+- Added a `Refresh Universe` operator console action that ranks candidates from direct public REST snapshots and writes `reports/operator_universe_candidates.json`.
+- Operator console now displays ranked candidates and can fill the Live Paper canonical, Binance leader, and MEXC lagger symbol fields from a selected row.
+- Live Paper no longer hard-codes BTC when a symbol is selected; BTC remains only the default fallback.
+- Live universe hydration smoke wrote 7 candidates: BTCUSDT, SOLUSDT, XRPUSDT, DOGEUSDT, SUIUSDT, AVAXUSDT, and ADAUSDT.
+- Initial 5-second public REST attempts timed out, so operator universe refresh now uses a 20-second HTTP timeout.
+- Decision: this is universe discovery and paper-run selection only; it does not submit/cancel orders, enable live trading, read secrets, bypass risk, or use MetaScalp market data.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 220 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-15 Live Paper WebSocket Reconnects
+
+- The BTC Live Paper sample ended after one closed trade with `stop_reason=stream_ended` because a public WebSocket closed with `no close frame received or sent`.
+- Added bounded reconnect loops to Binance USD-M and MEXC contract public WebSocket pumps in `apps/runner_paper.py`.
+- Live Paper now emits `live_paper_websocket_reconnect` warnings to stderr and keeps running until target closed trades, max event cap, or exhausted reconnect attempts.
+- Decision: this is public market-data paper-run resilience only; it does not submit/cancel orders, enable live trading, read secrets, bypass risk, or change signal/fill/PnL logic.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 220 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-15 Dynamic Live Paper Summary
+
+- Operator PnL KPIs previously updated only after `apps/runner_paper.py` completed because `operator_live_paper_summary.json` was written only at the end.
+- Added `summary_sink` support to `run_quote_paper_result`, emitting bounded summary snapshots every configured quote interval and on trade events.
+- Live Paper now refreshes `--summary-out` during the run with `stop_reason=running`, including realized, unrealized, total PnL, balance percent, and symbol fields.
+- Decision: this is operator reporting only; it does not submit/cancel orders, enable live trading, read secrets, bypass risk, or change signal/fill/PnL logic.
+- Current validation: `.venv\Scripts\python.exe -m unittest discover -s tests` passes 220 tests and `.venv\Scripts\python.exe -m compileall llbot apps tests` passes.
+
+## 2026-05-15 Live Paper Research Conclusion
+
+- `reports/operator_live_paper_audit.jsonl` currently contains 63 closed BTCUSDT paper trades from the latest usable sample.
+- Raw gross paper PnL was positive at `0.4266` USD with a `58.73%` win rate, but the run used `fee_bps=0` and `slippage_bps=0`.
+- Break-even round-trip cost was only `0.4292` bps; even `1` bps estimated round-trip cost turns the sample negative.
+- Decision: this is enough to reject the current BTCUSDT setup as economically tradable, but not enough to approve the broader strategy.
+- Next research pass should use ranked non-BTC candidates and non-zero fee/slippage assumptions.

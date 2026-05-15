@@ -142,6 +142,14 @@ Serve the static dashboard on a local-only HTTP address:
 
 The server only serves static files from the dashboard directory and rejects non-local bind hosts.
 
+Run the local operator console for safe workflow buttons, reports, jobs, and recent audit rows:
+
+```powershell
+.\.venv\Scripts\python.exe apps\operator_console.py --host 127.0.0.1 --port 8770
+```
+
+Open `http://127.0.0.1:8770/`. The console exposes health, dashboard refresh, replay/paper, live public paper, MetaScalp demo dry-run, and one explicitly confirmed tiny MetaScalp DemoMode submit action. It rejects non-local bind hosts, has no live-trading control, has no secret input, and still requires `METASCALP_DEMO_ORDER` before any demo POST.
+
 Capture MetaScalp private WebSocket updates to JSONL:
 
 ```powershell
